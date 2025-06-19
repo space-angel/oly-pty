@@ -1,8 +1,5 @@
 import { ReviewSummaryData, ReviewSummaryApiResponse } from '../types/reviewSummary';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
-// 임시 더미 데이터 (실제 API 연동 전까지 사용)
 const dummyReviewSummary: ReviewSummaryData = {
   totalReviewCount: 6891,
   averageRating: 4.7,

@@ -1,8 +1,5 @@
 import { ReviewSectionData, ReviewSectionApiResponse } from '../types/reviewSection';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
-
-// 임시 더미 데이터 (실제 API 연동 전까지 사용)
 const dummyReviewSection: ReviewSectionData = {
   reviews: [
     {
@@ -57,7 +54,6 @@ const dummyReviewSection: ReviewSectionData = {
 
 export const getReviewSection = async (productId: number): Promise<ReviewSectionData> => {
   try {
-    // API 연동 전까지 더미 데이터 반환
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(dummyReviewSection);

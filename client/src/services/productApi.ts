@@ -1,8 +1,5 @@
 import { Product, ProductApiResponse } from '../types/product';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
-// 임시 더미 데이터 (실제 API 연동 전까지 사용)
 const dummyProduct: Product = {
   id: 1,
   name: "[6월 올영픽/NEW] 클리오 킬 커버 메쉬 블러 쿠션 (+파우더 팩트 증정)",
@@ -20,7 +17,6 @@ const dummyProduct: Product = {
 
 export const getProduct = async (productId: number): Promise<Product> => {
   try {
-    // API 연동 전까지 더미 데이터 반환
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(dummyProduct);
