@@ -3,37 +3,50 @@ import { Keyword } from "../../types/reviewSection";
 
 interface RecommendKeywordsProps {
   keywords: Keyword[];
-  styles: any;
+  onKeywordChange: (keyword: string) => void;
+  currentKeyword: string;
 }
 
-const scrollbarHideStyle = {
-  scrollbarWidth: 'none', // Firefox
-  msOverflowStyle: 'none', // IE, Edge
-} as React.CSSProperties;
+const styles = {
+  container: {
+    display: 'flex',
+    flexWrap: 'nowrap' as const,
+    overflowX: 'auto' as const,
+    gap: 8,
+    height: '32px',
+    padding: '0 15px',
+    scrollbarWidth: 'none' as const, // Firefox
+    msOverflowStyle: 'none' as const, // IE, Edge
+  },
 
-const RecommendKeywords = ({ keywords, styles }: RecommendKeywordsProps) => (
-  <div style={styles.keywordSection}>
-    <div style={styles.keywordTitle}>추천 키워드</div>
-    <div
-      style={{
-        ...styles.keywordRow,
-        display: 'flex',
-        flexWrap: 'nowrap',
-        overflowX: 'auto',
-        ...scrollbarHideStyle,
-        gap: 8,
-      }}
-      className="recommend-keyword-row"
-    >
-      {keywords.map((keyword: Keyword) => (
-        <button
-          key={keyword.id}
-          style={styles.keywordBtn(!!keyword.active)}
-        >
-          {keyword.label}
-        </button>
-      ))}
-    </div>
+  button: (active: boolean) => ({
+    alignItems: "center",
+    justifyContent: "center",
+    width: "auto",
+    height: "100%",
+    background: active ? "#222" : "#fff",
+    color: active ? "#fff" : "rgb(117, 125, 134)",
+    border: "1px solid #bfc5cc",
+    borderRadius: 20,
+    padding: "0px 16px",
+    fontSize: 13,
+    fontWeight: 400,
+    cursor: "pointer",
+    whiteSpace: "nowrap" as const,
+  }),
+};
+
+const RecommendKeywords = ({ keywords, onKeywordChange, currentKeyword }: RecommendKeywordsProps) => (
+  <div style={styles.container} className="recommend-keyword-row">
+    {keywords.map((keyword: Keyword) => (
+      <button
+        key={keyword.id}
+        style={styles.button(currentKeyword === '' ? keyword.id === 'all' : keyword.id === currentKeyword)}
+        onClick={() => onKeywordChange(keyword.id)}
+      >
+        {keyword.label}
+      </button>
+    ))}
   </div>
 );
 

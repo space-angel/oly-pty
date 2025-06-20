@@ -1,16 +1,16 @@
 export interface Review {
-  id: number;
-  user: string;
+  _id: string;
+  productId: string;
+  userId: string;
+  userName: string;
   profileImage?: string;
-  badge?: string;
-  badgeColor?: string;
-  date: string;
   rating: number;
-  option?: string;
-  summary?: string;
   content: string;
-  likeCount: number;
-  reviewImage?: string;
+  images?: string[];
+  likes: number;
+  option?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ReviewPhoto {
@@ -36,10 +36,4 @@ export interface ReviewSectionData {
   reviewPhotos: ReviewPhoto[];
   keywords: Keyword[];
   sortOptions: SortOption[];
-}
-
-export interface ReviewSectionApiResponse {
-  data: ReviewSectionData;
-  success: boolean;
-  message?: string;
 } 

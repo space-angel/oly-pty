@@ -17,7 +17,7 @@ const containerStyle: React.CSSProperties = {
 };
 
 const originalPriceStyle: React.CSSProperties = {
-  fontSize: 16,
+  fontSize: 14,
   color: '#bbb',
   textDecoration: 'line-through',
   fontWeight: 400,

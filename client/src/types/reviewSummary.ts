@@ -1,26 +1,19 @@
 export interface SatisfactionDetail {
   label: string;
   percent: number;
-  highlight?: boolean;
+  highlight: boolean;
 }
 
-export interface SatisfactionItem {
+export interface Satisfaction {
   label: string;
   value: string;
   percent: number;
-  details?: SatisfactionDetail[];
+  details: SatisfactionDetail[];
 }
 
 export interface ReviewSummaryData {
   totalReviewCount: number;
   averageRating: number;
-  scoreBars: number[]; // 별점별 분포 (5점~1점)
-  satisfaction: SatisfactionItem[];
-  satisfactionDetails: SatisfactionDetail[][];
-}
-
-export interface ReviewSummaryApiResponse {
-  data: ReviewSummaryData;
-  success: boolean;
-  message?: string;
+  scoreBars: number[];
+  satisfaction: Satisfaction[];
 } 
