@@ -2,37 +2,16 @@
 // 아토믹 디자인 - Organisms
 // ---------------------------------------------
 //
-import React, { useState, useEffect } from "react";
-import { getReviewSummary } from "../../services/reviewSummaryApi";
-import { ReviewSummaryData, SatisfactionDetail } from "../../types/reviewSummary";
-import StarRating from "./StarRating";
+import React, { useState } from "react";
 import ScoreGraph from "./ScoreGraph";
 import SatisfactionRow from "./SatisfactionRow";
 import RatingSummary from "./RatingSummary";
+import { Product } from "../../types/product";
+import { SatisfactionDetail } from "../../types/reviewSummary";
 
 interface ReviewSummaryProps {
-  productId?: number;
+  product: Product;
 }
-
-const loadingStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: '200px',
-  background: '#fff',
-  fontSize: '16px',
-  color: '#666',
-};
-
-const errorStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  height: '200px',
-  background: '#fff',
-  fontSize: '16px',
-  color: '#ff3d3d',
-};
 
 const styles = {
   container: {
@@ -43,9 +22,9 @@ const styles = {
     display: 'flex' as const,
     flexDirection: 'column' as const,
     alignItems: 'flex-start' as const,
+    justifyContent: 'space-between' as const,
     gap: 12,
     background: '#fff',
-
   },
 
   optionBox: {
@@ -81,84 +60,12 @@ const styles = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     width: '100%',
-    gap: 8,
+    gap: 16,
     marginBottom: 8,
+    
   },
 
-  emojiBox: {
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    flex: 1,
-    minWidth: 0,
-    maxWidth: '33%',
-    marginTop: '0.5rem',
-  },
-  emojiCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: '50%',
-    background: '#FFE56B',
-    border: '2px solid #333',
-    display: 'flex' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    fontSize: 32,
-    marginBottom: 4,
-  },
-  ratingBox: {
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    flex: 2,
-    minWidth: '33%',
-  },
-  ratingCount: {
-    color: '#8994A2',
-    fontSize: 13,
-    lineHeight: 1.2,
-    marginBottom: 4,
-  },
-  ratingRow: {
-    display: 'flex' as const,
-    flexDirection: 'row' as const,
-    alignItems: 'flex-end' as const,
-    gap: 4,
-  },
-  ratingScore: {
-    fontWeight: 'bold',
-    fontSize: 40,
-    lineHeight: 1,
-    color: '#222',
-  },
-  ratingUnit: {
-    fontSize: 22,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  ratingLabel: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#222',
-    marginTop: 4,
-  },
-  starRow: {
-    display: 'flex' as const,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-    marginTop: 4,
-  },
-  star: {
-    display: 'inline-block' as const,
-    width: 20,
-    height: 20,
-    color: '#FF5753',
-    fontSize: 22,
-    lineHeight: 1,
-  },
+
   graphBox: {
     display: 'flex' as const,
     flexDirection: 'column' as const,
@@ -217,7 +124,7 @@ const styles = {
     maxHeight: 48,
   },
   graphLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#8994A2',
     marginTop: 4,
   },
@@ -270,83 +177,59 @@ const styles = {
   },
 };
 
-const ReviewSummary: React.FC<ReviewSummaryProps> = ({ productId = 1 }) => {
-  const [reviewSummary, setReviewSummary] = useState<ReviewSummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const ReviewSummary: React.FC<ReviewSummaryProps> = ({ product }) => {
   const [showDetail, setShowDetail] = useState(false);
 
-  useEffect(() => {
-    const fetchReviewSummary = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getReviewSummary(productId);
-        setReviewSummary(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : '리뷰 요약 정보를 불러오는데 실패했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReviewSummary();
-  }, [productId]);
-
-  if (loading) {
-    return <div style={loadingStyle}>리뷰 요약 정보를 불러오는 중...</div>;
+  if (!product.reviewSummary) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '200px',
+        background: '#fff',
+        fontSize: '16px',
+        color: '#ff3d3d',
+      }}>
+        리뷰 요약 정보를 불러올 수 없습니다.
+      </div>
+    );
   }
 
-  if (error) {
-    return <div style={errorStyle}>오류: {error}</div>;
-  }
+  const ImgFace: React.FC = () => (
+    <svg width="52" height="53" viewBox="0 0 52 53" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="26.5" r="25" fill="#FFE56B" stroke="#333333" strokeWidth="2"/>
+      <path d="M26 41.5C32.0751 41.5 37 36.5751 37 30.5H15C15 36.5751 19.9249 41.5 26 41.5Z" fill="white" stroke="#333333" strokeWidth="1.5"/>
+      <path d="M18 17.5L18 23.5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M21 20.5H15" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M34 17.5L34 23.5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M37 20.5H31" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
 
-  if (!reviewSummary) {
-    return <div style={errorStyle}>리뷰 요약 정보를 찾을 수 없습니다.</div>;
-  }
+  const { totalReviewCount, averageRating, scoreBars, satisfaction } = product.reviewSummary;
 
   return (
     <div style={styles.container}>
-      {/* 옵션 드롭다운 */}
-      <div style={styles.optionBox}>
-        <span style={styles.optionText}>전체 상품 옵션</span>
-
-        <span style={styles.optionIcon}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" clipRule="evenodd" d="M12.4828 4.04311C12.2029 3.77648 11.7598 3.78727 11.4931 4.06722L6.99973 8.78499L2.50696 4.06725C2.24035 3.78729 1.79727 3.77647 1.51731 4.04308C1.23735 4.30969 1.22652 4.75277 1.49314 5.03274L6.49281 10.2828C6.62494 10.4215 6.8081 10.5 6.99967 10.5C7.19124 10.5 7.37446 10.4215 7.50659 10.2828L12.5069 5.03277C12.7736 4.75282 12.7628 4.30974 12.4828 4.04311Z" fill="#4E5968" fillOpacity="0.75"/>
-          </svg>
-        </span>
-
-      </div>
-      {/* 상단 통계/그래프 */}
       <div style={styles.topRow}>
-        {/* 이모지 */}
-        <div style={styles.emojiBox}>
-            <span role="img" aria-label="최고">
-              <svg width="52" height="53" viewBox="0 0 52 53" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="26" cy="26.5" r="25" fill="#FFE56B" stroke="#333333" strokeWidth="2"/>
-              <path d="M26 41.5C32.0751 41.5 37 36.5751 37 30.5H15C15 36.5751 19.9249 41.5 26 41.5Z" fill="white" stroke="#333333" strokeWidth="1.5"/>
-              <path d="M18 17.5L18 23.5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M21 20.5H15" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M34 17.5L34 23.5" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M37 20.5H31" stroke="#333333" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              <div style={{fontSize:14, fontWeight:600, textAlign: 'center'}}>최고</div>
-            </span>
-
+        <div style={{flex:1, alignItems:'center', display:'flex', flexDirection:'column', gap:5, marginTop:10,maxWidth:120}}>
+          <ImgFace />
+          <p style={{fontSize:14, color:'#222', fontWeight:700,margin:0,lineHeight:'18px'}}>최고</p>
         </div>
-        {/* 평점/별점 */}
-        <RatingSummary 
-          totalReviewCount={reviewSummary.totalReviewCount}
-          averageRating={reviewSummary.averageRating}
-        />
-        {/* 그래프 */}
-        <ScoreGraph bars={reviewSummary.scoreBars} styles={styles} />
+        <div style={{flex:1}}>
+          <RatingSummary 
+            averageRating={product.reviewSummary.averageRating}
+            totalReviewCount={product.reviewSummary.totalReviewCount}
+          />
+        </div>
+        <div style={{flex:1}}>
+          <ScoreGraph bars={product.reviewSummary.scoreBars} styles={styles} />
+        </div>
       </div>
-      {/* 항목별 만족도 */}
+      
       <div style={styles.satisfactionGrid}>
-        {reviewSummary.satisfaction.map((item, idx) => {
-          const details = reviewSummary.satisfactionDetails[idx] || [];
+        {satisfaction.map((item) => {
+          const details = item.details || [];
           
           // 접었을 때는 가장 높은 퍼센트를 가진 항목만 표시
           const getMaxDetail = (detailArray: SatisfactionDetail[]): SatisfactionDetail[] => {

@@ -7,14 +7,13 @@ interface GoodsBrandProps {
 const brandStyle: React.CSSProperties = {
   fontSize: 14,
   color: '#222',
-  marginBottom: 8,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 0,
-  padding: '10px 15px',
+  padding: '0 15px',  
   marginTop: 10,
-  lineHeight: '20px',
+  lineHeight: '0px',
 };
 
 const iconRowStyle: React.CSSProperties = {

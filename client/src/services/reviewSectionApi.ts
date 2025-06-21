@@ -1,70 +1,103 @@
-import { ReviewSectionData, ReviewSectionApiResponse } from '../types/reviewSection';
+import { ReviewSectionData, Review } from '../types/reviewSection';
+import { apiClient, handleApiError, ApiResponse } from './config';
+import { AxiosError } from 'axios';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+interface GetReviewsParams {
+  productId: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  keyword?: string;
+}
 
-// 임시 더미 데이터 (실제 API 연동 전까지 사용)
-const dummyReviewSection: ReviewSectionData = {
-  reviews: [
-    {
-      id: 1,
-      user: "홍길동",
-      rating: 5,
-      content: "좋아요!",
-      date: "2024-06-13",
-      likeCount: 3,
-    },
-    {
-      id: 2,
-      user: "김영희",
-      rating: 4,
-      content: "핸드크림이 같이 증정되는 리뷰 줄바꿈 확인 기획이라서 더 좋은 것 같아요 잘 샀어요",
-      date: "2024-06-12",
-      likeCount: 1,
-      reviewImage: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: 3,
-      user: "이철수",
-      rating: 3,
-      content: "향은 딱 복숭아🍑 그냥 복숭아 보단.. 상큼함이 좀 더 들어간 천도복숭아? 상큼 70% 달달 30% 정도?머스크 향은 일절 없이 상큼 달달한 복숭아 향이여서 여름맞이 가벼운 향수 찾으신다면 추천드려요ㅎㅎ",
-      date: "2024-06-11",
-      likeCount: 0,
-      reviewImage: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80"
-    },
-  ],
-  reviewPhotos: [
-    { id: 1, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-    { id: 2, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-    { id: 3, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-    { id: 4, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-    { id: 5, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-    { id: 6, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-    { id: 7, url: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" },
-  ],
-  keywords: [
-    { id: "all", label: "전체", active: true },
-    { id: "usage", label: "#사용감" },
-    { id: "method", label: "#사용방법" },
-    { id: "part", label: "#사용부위" },
-    { id: "tip", label: "#사용팁" },
-  ],
-  sortOptions: [
-    { label: "유용한순", active: true, info: true },
-    { label: "도움순" },
-    { label: "최신순" },
-  ]
-};
+class ReviewSectionApi {
+  private static instance: ReviewSectionApi;
 
-export const getReviewSection = async (productId: number): Promise<ReviewSectionData> => {
-  try {
-    // API 연동 전까지 더미 데이터 반환
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(dummyReviewSection);
-      }, 400);
-    });
-  } catch (error) {
-    console.error('리뷰 섹션 정보 조회 실패:', error);
-    return dummyReviewSection;
+  private constructor() {}
+
+  public static getInstance(): ReviewSectionApi {
+    if (!ReviewSectionApi.instance) {
+      ReviewSectionApi.instance = new ReviewSectionApi();
+    }
+    return ReviewSectionApi.instance;
   }
-}; 
+
+  async getReviews({
+    productId,
+    page = 1,
+    limit = 10,
+    sort = 'createdAt',
+    keyword
+  }: GetReviewsParams): Promise<{
+    reviews: Review[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        sort,
+        ...(keyword && { keyword })
+      });
+
+      const response = await apiClient.get<ApiResponse<{
+        reviews: Review[];
+        total: number;
+        page: number;
+        totalPages: number;
+      }>>(`/products/${productId}/reviews?${params}`);
+
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '리뷰 목록을 가져오는데 실패했습니다.');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error as AxiosError, '리뷰 목록 조회');
+    }
+  }
+
+  async createReview(productId: string, review: Omit<Review, '_id' | 'createdAt' | 'updatedAt'>): Promise<Review> {
+    try {
+      const response = await apiClient.post<ApiResponse<Review>>(`/products/${productId}/reviews`, review);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '리뷰 작성에 실패했습니다.');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error as AxiosError, '리뷰 작성');
+    }
+  }
+
+  async updateReview(reviewId: string, review: Partial<Review>): Promise<Review> {
+    try {
+      const response = await apiClient.put<ApiResponse<Review>>(`/reviews/${reviewId}`, review);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '리뷰 수정에 실패했습니다.');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error as AxiosError, '리뷰 수정');
+    }
+  }
+
+  async deleteReview(reviewId: string): Promise<void> {
+    try {
+      const response = await apiClient.delete<ApiResponse<void>>(`/reviews/${reviewId}`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || '리뷰 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      return handleApiError(error as AxiosError, '리뷰 삭제');
+    }
+  }
+}
+
+export const reviewSectionApi = ReviewSectionApi.getInstance(); 

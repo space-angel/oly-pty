@@ -1,5 +1,8 @@
+import { ReviewSummaryData } from './reviewSummary';
+import { ReviewPhoto } from './reviewSection';
+
 export interface Product {
-  id: number;
+  _id: string;
   name: string;
   brand: string;
   originalPrice: number;
@@ -11,6 +14,10 @@ export interface Product {
   reviewCount: number;
   watchingCount: number;
   iconColors: string[];
+  reviewSummary: ReviewSummaryData;
+  reviewSection?: {
+    reviewPhotos: ReviewPhoto[];
+  };
 }
 
 export interface ProductApiResponse {

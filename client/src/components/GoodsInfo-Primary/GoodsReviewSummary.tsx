@@ -13,7 +13,7 @@ const containerStyle = {
   alignItems: 'center',
   gap: 8,
   marginBottom: 8,
-  padding: '0 15px',
+  padding: '10px 15px 0 15px',
 };
 
 const ratingStyle = {
@@ -81,8 +81,7 @@ const GoodsReviewSummary: React.FC<GoodsReviewSummaryProps> = ({
       </span>
       
     </div>
-
-    <GoodsWatchingCount watchingCount={watchingCount} />
+    <GoodsWatchingCount count={watchingCount} />
     
   </div>
 );

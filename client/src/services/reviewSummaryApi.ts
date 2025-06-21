@@ -1,58 +1,85 @@
-import { ReviewSummaryData, ReviewSummaryApiResponse } from '../types/reviewSummary';
+import { ReviewSummaryData } from '../types/reviewSummary';
+import { apiClient, handleApiError, ApiResponse } from './config';
+import { AxiosError } from 'axios';
 
-// const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+class ReviewSummaryApi {
+  private static instance: ReviewSummaryApi;
+  private readonly BASE_PATH = '/review-summary';
 
-// 임시 더미 데이터 (실제 API 연동 전까지 사용)
-const dummyReviewSummary: ReviewSummaryData = {
-  totalReviewCount: 6891,
-  averageRating: 4.7,
-  scoreBars: [80, 80, 80, 80, 80], // 5점~1점 순서
-  satisfaction: [
-    { 
-      label: "발색력", 
-      value: "아주 만족해요", 
-      percent: 72 
-    },
-    { 
-      label: "지속력", 
-      value: "보통이에요", 
-      percent: 48 
-    },
-    { 
-      label: "발림성", 
-      value: "꼼꼼해요", 
-      percent: 74 
-    },
-  ],
-  satisfactionDetails: [
-    [
-      { label: '아주 만족해요', percent: 72, highlight: true },
-      { label: '보통이에요', percent: 22 },
-      { label: '다소 아쉬워요', percent: 6 },
-    ],
-    [
-      { label: '지속이 오래돼요', percent: 38 },
-      { label: '보통이에요', percent: 48, highlight: true },
-      { label: '예상보다 짧아요', percent: 14 },
-    ],
-    [
-      { label: '꼼꼼해요', percent: 74, highlight: true },
-      { label: '보통이에요', percent: 23 },
-      { label: '다소 아쉬워요', percent: 3 },
-    ],
-  ]
-};
+  // 개발용 더미 데이터
+  private readonly dummyData: ReviewSummaryData = {
+    totalReviewCount: 405,
+    averageRating: 4.6,
+    scoreBars: [80, 15, 3, 1, 1],
+    satisfaction: [
+      {
+        label: '효과',
+        value: '4.5',
+        percent: 90,
+        details: [
+          { label: '매우 좋음', percent: 90, highlight: true },
+          { label: '좋음', percent: 8, highlight: false },
+          { label: '보통', percent: 2, highlight: false }
+        ]
+      },
+      {
+        label: '흡수력',
+        value: '4.3',
+        percent: 86,
+        details: [
+          { label: '매우 좋음', percent: 86, highlight: true },
+          { label: '좋음', percent: 10, highlight: false },
+          { label: '보통', percent: 4, highlight: false }
+        ]
+      },
+      {
+        label: '보습력',
+        value: '4.4',
+        percent: 88,
+        details: [
+          { label: '매우 좋음', percent: 88, highlight: true },
+          { label: '좋음', percent: 9, highlight: false },
+          { label: '보통', percent: 3, highlight: false }
+        ]
+      },
+      {
+        label: '향',
+        value: '4.2',
+        percent: 84,
+        details: [
+          { label: '매우 좋음', percent: 84, highlight: true },
+          { label: '좋음', percent: 12, highlight: false },
+          { label: '보통', percent: 4, highlight: false }
+        ]
+      }
+    ]
+  };
 
-export const getReviewSummary = async (productId: number): Promise<ReviewSummaryData> => {
-  try {
-    // API 연동 전까지 더미 데이터 반환
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(dummyReviewSummary);
-      }, 300);
-    });
-  } catch (error) {
-    console.error('리뷰 요약 정보 조회 실패:', error);
-    throw error;
+  private constructor() {}
+
+  public static getInstance(): ReviewSummaryApi {
+    if (!ReviewSummaryApi.instance) {
+      ReviewSummaryApi.instance = new ReviewSummaryApi();
+    }
+    return ReviewSummaryApi.instance;
   }
-}; 
+
+  async getReviewSummary(productId: string): Promise<ReviewSummaryData> {
+    try {
+      // 개발 환경에서는 더미 데이터 반환
+      if (process.env.NODE_ENV === 'development') {
+        return this.dummyData;
+      }
+      
+      const response = await apiClient.get<ApiResponse<ReviewSummaryData>>(`${this.BASE_PATH}/${productId}`);
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '리뷰 요약 정보를 가져오는데 실패했습니다.');
+      }
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error as AxiosError, '리뷰 요약 정보 조회');
+    }
+  }
+}
+
+export const reviewSummaryApi = ReviewSummaryApi.getInstance(); 

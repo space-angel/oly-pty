@@ -12,7 +12,7 @@ interface RatingSummaryProps {
 
 const styles = {
   ratingBox: {
-    display: 'flex' as const, flexDirection: 'column' as const, alignItems: 'center' as const,     width: '28.8%',
+    display: 'flex' as const, flexDirection: 'column' as const, alignItems: 'center' as const, width: '100%',
   },
   ratingCount: {
     color: '#8994A2', fontSize: 12, lineHeight: 1.2, marginBottom: 4
@@ -41,6 +41,7 @@ const styles = {
     lineHeight: 1,
   }
 };
+
 
 const RatingSummary: React.FC<RatingSummaryProps> = ({ 
   totalReviewCount = 6891, 
