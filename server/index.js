@@ -16,30 +16,8 @@ app.use((req, res, next) => {
   next();
 });
 
-const allowedOrigins = [
-  'http://localhost:3000', 
-  'http://localhost:3001', 
-  'http://localhost:3002',
-  'https://oly-pty.vercel.app',
-  'https://oly-4i20a6nec-banjaxs-projects.vercel.app'
-];
-
-// CORS 설정
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log('📬 Received a request from origin:', origin);
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
+// CORS 설정 (모든 출처 허용)
+app.use(cors());
 
 // 미들웨어 설정
 app.use(express.json());
