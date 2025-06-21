@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+const reviewPhotoSchema = new mongoose.Schema({
+  id: Number,
+  url: String,
+  alt: String
+});
+
 const satisfactionDetailSchema = new mongoose.Schema({
   label: String,
   percent: Number,
@@ -11,18 +17,6 @@ const satisfactionSchema = new mongoose.Schema({
   value: String,
   percent: Number,
   details: [satisfactionDetailSchema]
-});
-
-const keywordSchema = new mongoose.Schema({
-  id: String,
-  label: String,
-  active: Boolean
-});
-
-const sortOptionSchema = new mongoose.Schema({
-  label: String,
-  active: Boolean,
-  info: Boolean
 });
 
 const productSchema = new mongoose.Schema({
@@ -89,10 +83,9 @@ const productSchema = new mongoose.Schema({
     satisfaction: [satisfactionSchema]
   },
 
-  // 리뷰 섹션 설정 정보 (실제 리뷰 데이터는 Review 컬렉션으로 이동)
+  // 리뷰 섹션 (포토리뷰 사진)
   reviewSection: {
-    keywords: [keywordSchema],
-    sortOptions: [sortOptionSchema]
+    reviewPhotos: [reviewPhotoSchema]
   }
 }, {
   timestamps: true

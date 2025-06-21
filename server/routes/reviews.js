@@ -2,23 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
 const Product = require('../models/Product');
-
-// 응답 헬퍼 함수
-const sendSuccess = (res, data) => {
-  res.json({
-    success: true,
-    data: data,
-    message: null
-  });
-};
-
-const sendError = (res, status, message) => {
-  res.status(status).json({
-    success: false,
-    data: null,
-    message: message
-  });
-};
+const { sendSuccess, sendError } = require('../utils/responseHelper');
 
 // 상품의 리뷰 목록 조회 (페이지네이션)
 router.get('/products/:productId/reviews', async (req, res) => {
@@ -55,7 +39,7 @@ router.get('/products/:productId/reviews', async (req, res) => {
     });
   } catch (error) {
     console.error('리뷰 목록 조회 실패:', error);
-    sendError(res, 500, '리뷰 목록을 불러오는데 실패했습니다.');
+    sendError(res, '리뷰 목록을 불러오는데 실패했습니다.');
   }
 });
 
@@ -73,7 +57,7 @@ router.post('/products/:productId/reviews', async (req, res) => {
     sendSuccess(res, review);
   } catch (error) {
     console.error('리뷰 작성 실패:', error);
-    sendError(res, 500, '리뷰 작성에 실패했습니다.');
+    sendError(res, '리뷰 작성에 실패했습니다.');
   }
 });
 
@@ -88,7 +72,7 @@ router.put('/reviews/:reviewId', async (req, res) => {
     );
 
     if (!review) {
-      return sendError(res, 404, '리뷰를 찾을 수 없습니다.');
+      return sendError(res, '리뷰를 찾을 수 없습니다.', 404);
     }
 
     // 상품의 리뷰 통계 업데이트
@@ -97,7 +81,7 @@ router.put('/reviews/:reviewId', async (req, res) => {
     sendSuccess(res, review);
   } catch (error) {
     console.error('리뷰 수정 실패:', error);
-    sendError(res, 500, '리뷰 수정에 실패했습니다.');
+    sendError(res, '리뷰 수정에 실패했습니다.');
   }
 });
 
@@ -107,7 +91,7 @@ router.delete('/reviews/:reviewId', async (req, res) => {
     const review = await Review.findByIdAndDelete(req.params.reviewId);
     
     if (!review) {
-      return sendError(res, 404, '리뷰를 찾을 수 없습니다.');
+      return sendError(res, '리뷰를 찾을 수 없습니다.', 404);
     }
 
     // 상품의 리뷰 통계 업데이트
@@ -116,7 +100,7 @@ router.delete('/reviews/:reviewId', async (req, res) => {
     sendSuccess(res, { message: '리뷰가 삭제되었습니다.' });
   } catch (error) {
     console.error('리뷰 삭제 실패:', error);
-    sendError(res, 500, '리뷰 삭제에 실패했습니다.');
+    sendError(res, '리뷰 삭제에 실패했습니다.');
   }
 });
 
