@@ -29,18 +29,22 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
       <ReviewMeta option={option} />
       <ReviewContent content={content} />
       {images && images.length > 0 && (
-        <img
-          src={images[0]}
-          alt="리뷰 이미지"
-          style={{
-            width: "100px",
-            height: "100px",
-            borderRadius: 4,
-            margin: "8px 0",
-            objectFit: "cover",
-            display: "block",
-          }}
-        />
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '8px 0' }}>
+          {images.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`리뷰 이미지 ${index + 1}`}
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: 4,
+                objectFit: "cover",
+                flexShrink: 0,
+              }}
+            />
+          ))}
+        </div>
       )}
       <ReviewActions
         likeCount={likes}
@@ -156,6 +160,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: '21px',
     marginTop: 6,
     marginBottom: 8,
+    whiteSpace: 'pre-wrap',
   },
   info: {
     fontSize: 12,

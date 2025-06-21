@@ -1,0 +1,66 @@
+[
+  {
+    "name": "[6월 올영픽/NEW] 클리오 킬 커버 메쉬 블러 쿠션 (+파우더 팩트 증정)",
+    "brand": "클리오",
+    "originalPrice": 36000,
+    "salePrice": 27000,
+    "discountRate": 25,
+    "imageUrl": "https://image.oliveyoung.co.kr/cfimages/cf-goods/uploads/images/thumbnails/10/0000/0022/A00000022721303ko.jpg?qt=80",
+    "badges": ["오늘드림", "BEST"],
+    "rating": 4.6,
+    "reviewCount": 464,
+    "watchingCount": 175,
+    "iconColors": ["#FF0000", "#00FF00"],
+    "reviewSummary": {
+      "totalReviewCount": 464,
+      "averageRating": 4.6,
+      "scoreBars": [78, 14, 4, 2, 2],
+      "satisfaction": [
+        {
+          "label": "발색력",
+          "value": "아주 만족해요",
+          "percent": 71,
+          "details": [
+            { "label": "아주 만족해요", "percent": 71, "highlight": true },
+            { "label": "보통이에요", "percent": 26, "highlight": false },
+            { "label": "다소 아쉬워요", "percent": 3, "highlight": false }
+          ]
+        },
+        {
+          "label": "지속력",
+          "value": "지속이 오래돼요",
+          "percent": 66,
+          "details": [
+            { "label": "지속이 오래돼요", "percent": 66, "highlight": true },
+            { "label": "보통이에요", "percent": 32, "highlight": false },
+            { "label": "흐려요", "percent": 2, "highlight": false }
+          ]
+        },
+        {
+          "label": "수분감",
+          "value": "보통이에요",
+          "percent": 88,
+          "details": [
+            { "label": "아주 촉촉해요", "percent": 29, "highlight": false },
+            { "label": "보통이에요", "percent": 50, "highlight": true },
+            { "label": "매트해요", "percent": 21, "highlight": false }
+          ]
+        }
+      ]
+    },
+    "reviewSection": {
+      "reviewPhotos": [
+        {
+          "id": 1,
+          "url": "https://image.oliveyoung.co.kr/uploads/images/gdasEditor/2025/06/21/7c75fb152d904ee9828b5af1d8a2f83b1750511792743.png?QT=85&SF=webp",
+          "alt": ""
+        },
+        {
+          "id": 2,
+          "url": "https://image.oliveyoung.co.kr/uploads/images/gdasEditor/2025/06/21/92928a33cfb34eb99e5bf24b5d81d9281750492721131.png?QT=85&SF=webp",
+          "alt": ""
+        }
+      ]
+    }
+  }
+] 
