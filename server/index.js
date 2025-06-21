@@ -37,23 +37,6 @@ app.use(cors({
 // 미들웨어 설정
 app.use(express.json());
 
-// 응답 헬퍼 함수
-const sendSuccess = (res, data) => {
-  res.json({
-    success: true,
-    data: data,
-    message: null
-  });
-};
-
-const sendError = (res, status, message) => {
-  res.status(status).json({
-    success: false,
-    data: null,
-    message: message
-  });
-};
-
 // 몽고DB 연결
 let dbConnected = false;
 
@@ -70,9 +53,6 @@ mongoose.connect(process.env.MONGODB_URI)
 // 모델 import
 const Product = require('./models/Product');
 const Review = require('./models/Review');
-
-// 라우트 import
-const reviewRoutes = require('./routes/reviews');
 
 // API 상태 체크 미들웨어
 app.use((req, res, next) => {
