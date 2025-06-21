@@ -26,6 +26,7 @@ const allowedOrigins = [
 // CORS 설정
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('📬 Received a request from origin:', origin);
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
@@ -54,10 +55,6 @@ mongoose.connect(process.env.MONGODB_URI)
     console.error('❌ MongoDB 연결 실패:', err);
     dbConnected = false;
   });
-
-// 모델 import
-const Product = require('./models/Product');
-const Review = require('./models/Review');
 
 // API 상태 체크 미들웨어
 app.use((req, res, next) => {
