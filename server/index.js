@@ -17,7 +17,10 @@ app.use((req, res, next) => {
 });
 
 // CORS 설정 (모든 출처 허용)
-app.use(cors());
+app.use(cors({
+  origin: true, // 요청을 보낸 출처를 그대로 허용
+  credentials: true // 인증 정보 포함 요청 허용
+}));
 
 // 미들웨어 설정
 app.use(express.json());
