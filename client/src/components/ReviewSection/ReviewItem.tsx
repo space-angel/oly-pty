@@ -4,8 +4,11 @@
 //
 import React from "react";
 import { Review } from "../../types/reviewSection";
+import { highlightKeyword } from "../../utils/keywordHighlight";
 
-export interface ReviewItemProps extends Review {}
+export interface ReviewItemProps extends Review {
+  currentKeyword?: string;
+}
 
 const defaultProfile = "https://randomuser.me/api/portraits/women/44.jpg";
 const defaultBadgeColor = "rgb(240, 241, 244)";
@@ -21,13 +24,14 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
   content,
   likes = 0,
   images,
+  currentKeyword,
 }) => {
   return (
     <div style={styles.card}>
       <ReviewHeader user={userName} profileImage={profileImage} />
       <ReviewStarsAndDate rating={rating} date={new Date(createdAt).toLocaleDateString()} />
       <ReviewMeta option={option} />
-      <ReviewContent content={content} />
+      <ReviewContent content={content} currentKeyword={currentKeyword} />
       {images && images.length > 0 && (
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '8px 0' }}>
           {images.map((image, index) => (
@@ -81,8 +85,10 @@ const ReviewMeta: React.FC<{
   option ? <div style={styles.option}>[옵션] {option}</div> : null
 );
 
-const ReviewContent: React.FC<{ content: string }> = ({ content }) => (
-  <div style={styles.content}>{content}</div>
+const ReviewContent: React.FC<{ content: string; currentKeyword?: string }> = ({ content, currentKeyword }) => (
+  <div style={styles.content}>
+    {currentKeyword ? highlightKeyword(content, currentKeyword) : content}
+  </div>
 );
 
 const ReviewInfo: React.FC<{ infoText?: string }> = ({ infoText }) => (

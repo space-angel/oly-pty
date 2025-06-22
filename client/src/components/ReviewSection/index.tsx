@@ -169,6 +169,13 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   });
   const [currentSort, setCurrentSort] = useState('createdAt');
   const [currentKeyword, setCurrentKeyword] = useState('');
+  const [keywordCounts, setKeywordCounts] = useState<{
+    all: number;
+    usage: number;
+    method: number;
+    part: number;
+    tip: number;
+  } | undefined>(undefined);
 
   const sortOptions = [
     { label: "최신순", value: "createdAt", active: true, info: false },
@@ -206,9 +213,22 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     }
   };
 
+  const fetchKeywordCounts = async () => {
+    try {
+      const counts = await reviewSectionApi.getKeywordCounts(product._id);
+      setKeywordCounts(counts);
+    } catch (error) {
+      console.error('키워드별 리뷰 수 로딩 실패:', error);
+    }
+  };
+
   useEffect(() => {
     fetchReviews();
   }, [product._id, reviewState.page, currentSort, currentKeyword]);
+
+  useEffect(() => {
+    fetchKeywordCounts();
+  }, [product._id]);
 
   const handleSortChange = (sort: string) => {
     setCurrentSort(sort);
@@ -263,6 +283,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
           keywords={keywords}
           onKeywordChange={handleKeywordChange}
           currentKeyword={currentKeyword}
+          keywordCounts={keywordCounts}
         />
       </div>
 
@@ -273,6 +294,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
         page={reviewState.page}
         totalPages={reviewState.totalPages}
         onPageChange={(page) => setReviewState(prev => ({ ...prev, page }))}
+        currentKeyword={currentKeyword}
       />
     </div>
   );

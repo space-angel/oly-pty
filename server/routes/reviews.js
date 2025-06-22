@@ -20,7 +20,20 @@ router.get('/products/:productId/reviews', async (req, res) => {
     // 검색 조건 설정
     const query = { productId };
     if (keyword && keyword !== 'all') {
-      query.content = { $regex: keyword, $options: 'i' };
+      // 키워드별 검색 조건 매핑
+      const keywordMapping = {
+        'usage': /(사용감|제형|발림성|발리기|바르기|발라|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|바르며|바르면|바르니|바르는데|바르는|바르며)/i,
+        'method': /(사용방법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|사용법|적용법|도포법)/i,
+        'part': /(사용부위|부위|얼굴|이마|볼|코|턱|관자놀이|T존|U존|윗입술|아랫입술|눈가|눈밑|눈위|눈옆|눈앞|눈뒤|눈앞|눈뒤|눈가|눈밑|눈위|눈옆|눈앞|눈뒤)/i,
+        'tip': /(사용팁|팁|꿀팁|노하우|조언|추천|추천법|사용법|적용법|도포법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i
+      };
+      
+      if (keywordMapping[keyword]) {
+        query.content = keywordMapping[keyword];
+      } else {
+        // 기본 검색 (기존 로직)
+        query.content = { $regex: keyword, $options: 'i' };
+      }
     }
 
     const reviews = await Review.find(query)
@@ -129,5 +142,45 @@ async function updateProductReviewStats(productId) {
     }
   });
 }
+
+// 키워드별 리뷰 수 조회
+router.get('/products/:productId/reviews/keyword-counts', async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // 키워드별 검색 패턴
+    const keywordPatterns = {
+      'usage': /(사용감|제형|발림성|발리기|바르기|발라|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i,
+      'method': /(사용방법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|사용법|적용법|도포법)/i,
+      'part': /(사용부위|부위|얼굴|이마|볼|코|턱|관자놀이|T존|U존|윗입술|아랫입술|눈가|눈밑|눈위|눈옆|눈앞|눈뒤)/i,
+      'tip': /(사용팁|팁|꿀팁|노하우|조언|추천|추천법|사용법|적용법|도포법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i
+    };
+
+    const allReviews = await Review.find({ productId });
+    const totalCount = allReviews.length;
+
+    const keywordCounts = {
+      all: totalCount,
+      usage: 0,
+      method: 0,
+      part: 0,
+      tip: 0
+    };
+
+    // 각 키워드별 리뷰 수 계산
+    allReviews.forEach(review => {
+      Object.keys(keywordPatterns).forEach(keyword => {
+        if (keywordPatterns[keyword].test(review.content)) {
+          keywordCounts[keyword]++;
+        }
+      });
+    });
+
+    sendSuccess(res, keywordCounts);
+  } catch (error) {
+    console.error('키워드별 리뷰 수 조회 실패:', error);
+    sendError(res, '키워드별 리뷰 수를 불러오는데 실패했습니다.');
+  }
+});
 
 module.exports = router; 

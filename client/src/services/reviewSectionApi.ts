@@ -59,6 +59,32 @@ class ReviewSectionApi {
     }
   }
 
+  async getKeywordCounts(productId: string): Promise<{
+    all: number;
+    usage: number;
+    method: number;
+    part: number;
+    tip: number;
+  }> {
+    try {
+      const response = await apiClient.get<ApiResponse<{
+        all: number;
+        usage: number;
+        method: number;
+        part: number;
+        tip: number;
+      }>>(`/products/${productId}/reviews/keyword-counts`);
+
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '키워드별 리뷰 수를 가져오는데 실패했습니다.');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error as AxiosError, '키워드별 리뷰 수 조회');
+    }
+  }
+
   async createReview(productId: string, review: Omit<Review, '_id' | 'createdAt' | 'updatedAt'>): Promise<Review> {
     try {
       const response = await apiClient.post<ApiResponse<Review>>(`/products/${productId}/reviews`, review);
