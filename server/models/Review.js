@@ -38,7 +38,19 @@ const reviewSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  option: String
+  option: String,
+  skinType: {
+    type: String,
+    default: ''
+  },
+  skinTone: {
+    type: String,
+    default: ''
+  },
+  skinConcerns: {
+    type: [String],
+    default: []
+  },
 }, {
   timestamps: true
 });

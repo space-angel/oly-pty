@@ -8,6 +8,9 @@ import { highlightKeyword } from "../../utils/keywordHighlight";
 
 export interface ReviewItemProps extends Review {
   currentKeyword?: string;
+  skinType?: string;
+  skinTone?: string;
+  skinConcerns?: string[];
 }
 
 const defaultProfile = "https://randomuser.me/api/portraits/women/44.jpg";
@@ -25,10 +28,19 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
   likes = 0,
   images,
   currentKeyword,
+  skinType,
+  skinTone,
+  skinConcerns,
 }) => {
   return (
     <div style={styles.card}>
-      <ReviewHeader user={userName} profileImage={profileImage} />
+      <ReviewHeader 
+        user={userName} 
+        profileImage={profileImage} 
+        skinType={skinType}
+        skinTone={skinTone}
+        skinConcerns={skinConcerns}
+      />
       <ReviewStarsAndDate rating={rating} date={new Date(createdAt).toLocaleDateString()} />
       <ReviewMeta option={option} />
       <ReviewContent content={content} currentKeyword={currentKeyword} />
@@ -63,14 +75,27 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
 const ReviewHeader: React.FC<{
   user: string;
   profileImage: string;
-}> = ({ user, profileImage }) => (
-  <div style={{ display: 'flex', alignItems: 'center', marginBottom:22 }}>
-    <img src={profileImage} alt="프로필" style={styles.profileImg} />
-    <div style={{ marginLeft: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-      <span style={{ fontWeight: 600, fontSize: 16 }}>{user}</span>
+  skinType?: string;
+  skinTone?: string;
+  skinConcerns?: string[];
+}> = ({ user, profileImage, skinType, skinTone, skinConcerns }) => {
+  // 값이 있으면만 표시, 없으면 아무것도 표시하지 않음
+  const infoArr = [skinType, skinTone, ...(skinConcerns || [])].filter(Boolean);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom:22 }}>
+      <img src={profileImage} alt="프로필" style={styles.profileImg} />
+      <div style={{ marginLeft: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+        <span style={{ fontWeight: 600, fontSize: 16 }}>{user}</span>
+        {infoArr.length > 0 && (
+          <span style={{ fontSize: 12, color: '#99a1a8', fontWeight: 400 }}>
+            {infoArr.join(' · ')}
+          </span>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ReviewStarsAndDate: React.FC<{ rating: number; date: string }> = ({ rating, date }) => (
   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4, marginLeft: 0 }}>
