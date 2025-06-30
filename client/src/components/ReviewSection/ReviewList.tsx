@@ -9,6 +9,11 @@ interface ReviewListProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   currentKeyword?: string;
+  filter?: {
+    type?: string | null;
+    tone?: string | null;
+    issues?: string[];
+  };
 }
 
 const styles = {
@@ -43,7 +48,8 @@ const ReviewList: React.FC<ReviewListProps> = ({
   page,
   totalPages,
   onPageChange,
-  currentKeyword
+  currentKeyword,
+  filter
 }) => {
   if (loading) {
     return (
@@ -82,7 +88,7 @@ const ReviewList: React.FC<ReviewListProps> = ({
     <div>
       {reviews.map((review, idx) => (
         <React.Fragment key={review._id}>
-          <ReviewItem {...review} currentKeyword={currentKeyword} />
+          <ReviewItem {...review} currentKeyword={currentKeyword} filter={filter} />
           {idx < reviews.length - 1 && (
             <div style={{
               borderBottom: "1px solid #F3F3F3",

@@ -1,4 +1,3 @@
-
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -36,8 +35,8 @@
 
 html, body, #root {
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: scroll; /* ← 이 줄 추가 */
+  overflow-x: hidden !important;
+  overflow-y: scroll;
   /* 필요시 width: 100%; */
   /* 스크롤바 숨김 */
   scrollbar-width: none; /* Firefox */
