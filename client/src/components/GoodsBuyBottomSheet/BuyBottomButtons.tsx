@@ -40,6 +40,7 @@ const cartButtonStyle: React.CSSProperties = {
   height: 48,
   fontWeight: 700,
   fontSize: 16,
+  color: '#222',
 };
 
 const buyButtonStyle: React.CSSProperties = {

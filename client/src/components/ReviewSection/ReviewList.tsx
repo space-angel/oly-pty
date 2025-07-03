@@ -5,9 +5,7 @@ import { Review } from "../../types/reviewSection";
 interface ReviewListProps {
   reviews?: Review[];
   loading?: boolean;
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
+  lastReviewRef?: (node: any) => void;
   currentKeyword?: string;
   filter?: {
     type?: string | null;
@@ -45,9 +43,7 @@ const styles = {
 const ReviewList: React.FC<ReviewListProps> = ({ 
   reviews = [], 
   loading = false,
-  page,
-  totalPages,
-  onPageChange,
+  lastReviewRef,
   currentKeyword,
   filter
 }) => {
@@ -59,51 +55,25 @@ const ReviewList: React.FC<ReviewListProps> = ({
     );
   }
 
-  const renderPagination = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          style={styles.pageButton(i === page)}
-          onClick={() => onPageChange(i)}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    return pages;
-  };
-
   return (
     <div>
-      {reviews.map((review, idx) => (
-        <React.Fragment key={review._id}>
-          <ReviewItem {...review} currentKeyword={currentKeyword} filter={filter} />
-          {idx < reviews.length - 1 && (
-            <div style={{
-              borderBottom: "1px solid #F3F3F3",
-              margin: "15px -15px",
-              padding: "0 15px",
-            }} />
-          )}
-        </React.Fragment>
-      ))}
-      
-      {totalPages > 1 && (
-        <div style={styles.paginationContainer}>
-          {renderPagination()}
-        </div>
-      )}
+      {reviews.map((review, idx) => {
+        const isLast = idx === reviews.length - 1;
+        return (
+          <React.Fragment key={review._id}>
+            <div ref={isLast && lastReviewRef ? lastReviewRef : undefined}>
+              <ReviewItem {...review} currentKeyword={currentKeyword} filter={filter} />
+            </div>
+            {idx < reviews.length - 1 && (
+              <div style={{
+                borderBottom: "1px solid #F3F3F3",
+                margin: "15px -15px",
+                padding: "0 15px",
+              }} />
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };

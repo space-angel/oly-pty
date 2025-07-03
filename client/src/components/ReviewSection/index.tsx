@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Product } from "../../types/product";
 import { Review } from "../../types/reviewSection";
 import ReviewList from "./ReviewList";
@@ -188,6 +188,19 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   });
   const pageSize = 10;
 
+  const [hasMore, setHasMore] = useState(true);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastReviewRef = useCallback((node: HTMLDivElement | null) => {
+    if (reviewState.loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new window.IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setReviewState(prev => ({ ...prev, page: prev.page + 1 }));
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [reviewState.loading, hasMore]);
+
   const sortOptions = [
     { label: "최신순", value: "createdAt", active: true, info: false },
     { label: "도움순", value: "likes", active: false, info: false },
@@ -202,23 +215,24 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     { id: "tip", label: "#사용팁" },
   ];
 
-  const fetchReviews = async () => {
+  const fetchReviews = async (reset = false) => {
     try {
       setReviewState(prev => ({ ...prev, loading: true }));
       const result = await reviewSectionApi.getReviews({
         productId: product._id,
-        page: 1,
-        limit: 9999,
+        page: reset ? 1 : reviewState.page,
+        limit: pageSize,
         sort: currentSort,
         keyword: currentKeyword
       });
       setReviewState(prev => ({
         ...prev,
-        reviews: result.reviews,
+        reviews: reset ? result.reviews : [...prev.reviews, ...result.reviews],
         total: result.total,
         totalPages: result.totalPages,
         loading: false
       }));
+      setHasMore(result.page < result.totalPages);
     } catch (error) {
       console.error('리뷰 로딩 실패:', error);
       setReviewState(prev => ({ ...prev, loading: false }));
@@ -235,7 +249,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   };
 
   useEffect(() => {
-    fetchReviews();
+    fetchReviews(reviewState.page === 1);
+    // eslint-disable-next-line
   }, [product._id, reviewState.page, currentSort, currentKeyword]);
 
   useEffect(() => {
@@ -244,12 +259,14 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
 
   const handleSortChange = (sort: string) => {
     setCurrentSort(sort);
-    setReviewState(prev => ({ ...prev, page: 1 }));
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
   };
 
   const handleKeywordChange = (keyword: string) => {
     setCurrentKeyword(keyword === 'all' ? '' : keyword);
-    setReviewState(prev => ({ ...prev, page: 1 }));
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
   };
 
   const handleFilterApply = (filterValues: { type: string | null; tone: string | null; issues: string[]; reviewType?: string | null; rating?: number | null }) => {
@@ -260,7 +277,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
       reviewType: filterValues.reviewType || null,
       rating: filterValues.rating || null,
     });
-    setReviewState(prev => ({ ...prev, page: 1 }));
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
     setFilterModalOpen(false);
   };
 
@@ -273,8 +291,6 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
                        filter.reviewType === '일반리뷰' ? (!review.images || review.images.length === 0) : true;
     return typeMatch && toneMatch && issuesMatch && ratingMatch && photoMatch;
   });
-
-  const pagedReviews = filteredReviews.slice((reviewState.page-1)*pageSize, reviewState.page*pageSize);
 
   // 필터링된 리뷰에서 키워드별 개수 실시간 계산 (본문에서 추출)
   const keywordCountsLive = {
@@ -346,14 +362,12 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
 
       {/* 리뷰 목록 */}
       <ReviewList 
-        reviews={pagedReviews}
+        reviews={filteredReviews}
         loading={reviewState.loading}
-        page={reviewState.page}
-        totalPages={Math.ceil(filteredReviews.length / pageSize)}
-        onPageChange={(page) => setReviewState(prev => ({ ...prev, page }))}
-        currentKeyword={currentKeyword}
-        filter={filter}
+        lastReviewRef={lastReviewRef}
       />
+      {reviewState.loading && <div style={{textAlign:'center',padding:'16px'}}>로딩 중...</div>}
+      {!hasMore && <div style={{textAlign:'center',padding:'16px',color:'#aaa'}}>더 이상 리뷰가 없습니다.</div>}
 
       <FilterModal
         open={filterModalOpen}
