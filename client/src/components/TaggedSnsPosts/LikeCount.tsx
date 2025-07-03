@@ -1,7 +1,3 @@
-// LikeCount atom: 좋아요 수 컴포넌트
-// 아토믹 디자인 - Atoms
-// ---------------------------------------------
-//
 import React from "react";
 
 type LikeCountProps = {
@@ -10,8 +6,8 @@ type LikeCountProps = {
 };
 
 const LikeCount = ({ count, style }: LikeCountProps) => (
-  <div style={{ color: "#6b7280", fontSize: 15, display: "flex", alignItems: "center", ...style }}>
-    <span style={{ fontSize: 18, marginRight: 4 }}>♡</span>{count}
+  <div style={{ color: "#757d86", fontSize: 13, display: "flex", alignItems: "center", ...style }}>
+    <span style={{ fontSize: 16, marginRight: 2, color: "#757d86" }}>♡</span>{count}
   </div>
 );
 

@@ -14,7 +14,6 @@ export interface Review {
   skinType?: string;
   skinTone?: string;
   skinConcerns?: string[];
-  keywords?: string[];
 }
 
 export interface ReviewPhoto {

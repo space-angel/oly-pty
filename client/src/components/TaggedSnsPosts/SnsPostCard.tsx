@@ -1,16 +1,11 @@
-// SnsPostCard molecule: SNS 게시물 카드 컴포넌트
-// 아토믹 디자인 - Molecules
-// ---------------------------------------------
-//
 import React from "react";
 import LikeCount from "./LikeCount";
 
 type SnsPostCardProps = {
   image: string;
-  tag: string;
-  title: string;
+  tags: string[];
   desc: string;
-  likes: number;
+  likes: number | null;
 };
 
 const styles = {
@@ -23,7 +18,7 @@ const styles = {
     position: "relative" as const,
   },
   image: {
-    borderRadius: 4,
+    borderRadius: 2,
     width: 140,
     height: 186,
     objectFit: "cover" as const,
@@ -37,7 +32,7 @@ const styles = {
     fontSize: 13,
     fontWeight: 400,
     lineHeight: "18px",
-    marginBottom: 12,
+    marginBottom: 6,
     minHeight: 36,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -46,18 +41,30 @@ const styles = {
     WebkitLineClamp: 2,
     flex: 1,
   },
+  tags: {
+    color: '#131518',
+    fontSize: 13,
+    fontWeight: 700,
+    lineHeight: "18px",
+    marginBottom: 4,
+    minHeight: 16,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
+  },
 };
 
-const SnsPostCard = ({ image, tag, title, desc, likes }: SnsPostCardProps) => (
+const SnsPostCard = ({ image, tags, desc, likes }: SnsPostCardProps) => (
   <div style={styles.card}>
-
     <div style={styles.imageWrap}>
-      <img src={image} alt={title} style={styles.image} />
+      <img src={image} alt={desc.slice(0, 20)} style={styles.image} />
     </div>
-
     <div style={styles.content}>
+      {tags && tags.length > 0 && (
+        <div style={styles.tags}>{tags.join(' , ')}</div>
+      )}
       <div style={styles.desc}>{desc}</div>
-      <LikeCount count={likes} />
+      <LikeCount count={likes ?? 0} />
     </div>
   </div>
 );
