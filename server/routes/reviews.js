@@ -40,7 +40,25 @@ router.get('/products/:productId/reviews', async (req, res) => {
     if (rating) query.rating = Number(rating);
     if (type) query.skinType = type;
     if (tone) query.skinTone = tone;
-    if (reviewType) query.reviewType = reviewType;
+    if (reviewType === '포토리뷰') {
+      query.$or = [
+        { images: { $exists: true, $not: { $size: 0 } } },
+        { reviewImages: { $exists: true, $not: { $size: 0 } } }
+      ];
+    } else if (reviewType === '일반리뷰') {
+      query.$and = [
+        { $or: [
+          { images: { $exists: false } },
+          { images: { $size: 0 } }
+        ] },
+        { $or: [
+          { reviewImages: { $exists: false } },
+          { reviewImages: { $size: 0 } }
+        ] }
+      ];
+    } else if (reviewType) {
+      query.reviewType = reviewType;
+    }
     if (issues) {
       const issuesArr = Array.isArray(issues) ? issues : issues.split(',');
       query.skinConcerns = { $in: issuesArr };
@@ -54,8 +72,17 @@ router.get('/products/:productId/reviews', async (req, res) => {
 
     const total = await Review.countDocuments(query);
 
+    // images 필드를 항상 포함시켜 반환
+    const reviewsWithImages = reviews.map(r => {
+      const obj = r.toObject ? r.toObject() : r;
+      return {
+        ...obj,
+        images: obj.images && obj.images.length > 0 ? obj.images : (obj.reviewImages || [])
+      };
+    });
+
     sendSuccess(res, {
-      reviews,
+      reviews: reviewsWithImages,
       total,
       page: Number(page),
       totalPages: Math.ceil(total / Number(limit))
