@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Product } from "../../types/product";
 import { Review } from "../../types/reviewSection";
 import ReviewList from "./ReviewList";
 import RecommendKeywords from "./RecommendKeywords";
 import { reviewSectionApi } from "../../services/reviewSectionApi";
+import FilterModal from "./FilterModal";
+import { hasKeyword } from "../../utils/keywordHighlight";
+import { useInView } from 'react-intersection-observer';
 
 interface ReviewSectionProps {
   product: Product;
@@ -165,10 +168,30 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     total: 0,
     page: 1,
     totalPages: 1,
-    loading: true
+    loading: false
   });
   const [currentSort, setCurrentSort] = useState('createdAt');
   const [currentKeyword, setCurrentKeyword] = useState('');
+  const [keywordCounts, setKeywordCounts] = useState<{
+    all: number;
+    usage: number;
+    method: number;
+    part: number;
+    tip: number;
+  } | undefined>(undefined);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filter, setFilter] = useState({
+    type: null as string | null,
+    tone: null as string | null,
+    issues: [] as string[],
+    reviewType: null as string | null,
+    rating: null as number | null,
+  });
+  const pageSize = 9999;
+
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const { ref, inView } = useInView();
 
   const sortOptions = [
     { label: "최신순", value: "createdAt", active: true, info: false },
@@ -184,44 +207,116 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     { id: "tip", label: "#사용팁" },
   ];
 
-  const fetchReviews = async () => {
+  const fetchReviews = async ({ reset = false, page = 1, filterArg = filter, sortArg = currentSort, keywordArg = currentKeyword } = {}) => {
     try {
-      setReviewState(prev => ({ ...prev, loading: true }));
+      if (reset) setReviewState(prev => ({ ...prev, loading: true }));
+      setIsFetchingNextPage(true);
+      const cleanFilter = {
+        ...filterArg,
+        type: filterArg.type ?? undefined,
+        tone: filterArg.tone ?? undefined,
+        reviewType: filterArg.reviewType ?? undefined,
+        rating: filterArg.rating ?? undefined,
+      };
       const result = await reviewSectionApi.getReviews({
         productId: product._id,
-        page: reviewState.page,
-        sort: currentSort,
-        keyword: currentKeyword
+        page,
+        limit: pageSize,
+        sort: sortArg,
+        keyword: keywordArg,
+        ...cleanFilter
       });
       setReviewState(prev => ({
         ...prev,
-        reviews: result.reviews,
+        reviews: reset ? result.reviews : [...prev.reviews, ...result.reviews],
         total: result.total,
         totalPages: result.totalPages,
+        page,
         loading: false
       }));
+      setHasMore(result.page < result.totalPages);
+      setIsFetchingNextPage(false);
     } catch (error) {
-      console.error('리뷰 로딩 실패:', error);
       setReviewState(prev => ({ ...prev, loading: false }));
+      setIsFetchingNextPage(false);
+    }
+  };
+
+  const fetchKeywordCounts = async () => {
+    try {
+      const counts = await reviewSectionApi.getKeywordCounts(product._id);
+      setKeywordCounts(counts);
+    } catch (error) {
     }
   };
 
   useEffect(() => {
-    fetchReviews();
-  }, [product._id, reviewState.page, currentSort, currentKeyword]);
+    setReviewState(prev => ({ ...prev, reviews: [], page: 1, loading: true }));
+    setHasMore(true);
+    fetchReviews({ reset: true, page: 1, filterArg: filter, sortArg: currentSort, keywordArg: currentKeyword });
+    // eslint-disable-next-line
+  }, [product._id, currentSort, currentKeyword, filter]);
+
+  useEffect(() => {
+    if (inView && hasMore && !reviewState.loading && !isFetchingNextPage) {
+      fetchReviews({ page: reviewState.page + 1, filterArg: filter, sortArg: currentSort, keywordArg: currentKeyword });
+    }
+    // eslint-disable-next-line
+  }, [inView, hasMore, reviewState.loading, isFetchingNextPage, reviewState.page, filter, currentSort, currentKeyword]);
+
+  useEffect(() => {
+    fetchKeywordCounts();
+  }, [product._id]);
 
   const handleSortChange = (sort: string) => {
     setCurrentSort(sort);
-    setReviewState(prev => ({ ...prev, page: 1 }));
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
   };
 
   const handleKeywordChange = (keyword: string) => {
     setCurrentKeyword(keyword === 'all' ? '' : keyword);
-    setReviewState(prev => ({ ...prev, page: 1 }));
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
   };
 
+  const handleFilterApply = (filterValues: { type: string | null; tone: string | null; issues: string[]; reviewType?: string | null; rating?: number | null }) => {
+    setFilter({
+      type: filterValues.type,
+      tone: filterValues.tone,
+      issues: filterValues.issues,
+      reviewType: filterValues.reviewType || null,
+      rating: filterValues.rating || null,
+    });
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
+    setFilterModalOpen(false);
+  };
+
+  const filteredReviews = reviewState.reviews.filter(review => {
+    const typeMatch = filter.type ? review.skinType === filter.type : true;
+    const toneMatch = filter.tone ? review.skinTone === filter.tone : true;
+    const issuesMatch = filter.issues.length > 0 ? filter.issues.every(issue => review.skinConcerns?.includes(issue)) : true;
+    const ratingMatch = filter.rating ? review.rating === filter.rating : true;
+    const photoMatch = filter.reviewType === '포토리뷰' ? (review.images && review.images.length > 0) :
+                       filter.reviewType === '일반리뷰' ? (!review.images || review.images.length === 0) : true;
+    return typeMatch && toneMatch && issuesMatch && ratingMatch && photoMatch;
+  });
+
+  // 필터링된 리뷰에서 키워드별 개수 실시간 계산 (본문에서 추출)
+  const keywordCountsLive = {
+    all: filteredReviews.length,
+    usage: filteredReviews.filter(r => hasKeyword(r.content, 'usage')).length,
+    method: filteredReviews.filter(r => hasKeyword(r.content, 'method')).length,
+    part: filteredReviews.filter(r => hasKeyword(r.content, 'part')).length,
+    tip: filteredReviews.filter(r => hasKeyword(r.content, 'tip')).length,
+  };
+
+  // 필터가 하나라도 적용되어 있는지 확인
+  const isFilterActive = !!(filter.type || filter.tone || filter.issues.length > 0 || filter.reviewType || filter.rating);
+
   return (
-    <div style={styles.container}>
+    <div style={styles.container}>  
       <div style={styles.title}>전체 리뷰 ({reviewState.total})</div>
 
       {/* 상단 정렬/필터 */}
@@ -244,14 +339,23 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
             ))}
           </div>
 
-          <button style={styles.filterBtn}>
-            <span style={styles.filterIcon}>
+          <button style={{
+            ...styles.filterBtn,
+            color: '#222',
+            opacity: isFilterActive ? 1 : 0.5,
+            fontWeight: isFilterActive ? 700 : 400
+          }} onClick={() => setFilterModalOpen(true)}>
+            <span style={{
+              ...styles.filterIcon,
+              color: '#222',
+              opacity: isFilterActive ? 1 : 0.5
+            }}>
             <svg width="12" height="13" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M4.7892 2.82044C5.09468 1.72678 6.09842 0.9245 7.28959 0.9245C8.48075 0.9245 9.4845 1.72678 9.78999 2.82044H11.2999C11.6866 2.82044 12 3.13385 12 3.52044C12 3.90705 11.6866 4.22044 11.2999 4.22044H9.78993C9.48432 5.314 8.48064 6.11617 7.28959 6.11617C6.09854 6.11617 5.09485 5.314 4.78926 4.22044H0.799976C0.413377 4.22044 0.0999756 3.90705 0.0999756 3.52044C0.0999756 3.13385 0.413377 2.82044 0.799976 2.82044H4.7892ZM7.28953 4.71639C7.23965 4.71639 7.19048 4.71334 7.14218 4.7074L7.28953 4.71639ZM7.14218 4.7074C6.55126 4.63481 6.0937 4.13112 6.0937 3.52056C6.0937 3.2591 6.17758 3.01725 6.31991 2.82044C6.53715 2.51999 6.89047 2.3245 7.28959 2.3245C7.68865 2.3245 8.04209 2.51999 8.25932 2.82044C8.40166 3.01725 8.48536 3.2591 8.48536 3.52056C8.48536 3.78191 8.40148 4.02369 8.25926 4.22044C8.07446 4.47605 7.79108 4.65569 7.46488 4.70362C7.40765 4.71204 7.34909 4.71639 7.28953 4.71639" fill="#292C33" fill-opacity="0.75"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M2.69569 12.8245C3.88527 12.8245 4.88794 12.0243 5.19489 10.9328L11.3002 10.9286C11.6868 10.9284 11.9999 10.6148 11.9996 10.2282C11.9994 9.84155 11.6858 9.52835 11.2992 9.52865L5.19722 9.53285C4.89307 8.43705 3.88831 7.63281 2.69569 7.63281C1.26205 7.63281 0.0998535 8.79499 0.0998535 10.2286C0.0998535 11.6623 1.26205 12.8245 2.69569 12.8245ZM2.69569 9.03281C2.29375 9.03281 1.93812 9.23109 1.72132 9.53524C1.58178 9.73083 1.4998 9.97029 1.4998 10.2289C1.4998 10.8893 2.03519 11.4247 2.69563 11.4247C3.35607 11.4247 3.89146 10.8893 3.89146 10.2289C3.89146 9.9697 3.809 9.72972 3.66888 9.5339C3.45198 9.2305 3.09703 9.03281 2.69569 9.03281Z" fill="#292C33" fill-opacity="0.75"/>
+            <path fillRule="evenodd" clipRule="evenodd" d="M4.7892 2.82044C5.09468 1.72678 6.09842 0.9245 7.28959 0.9245C8.48075 0.9245 9.4845 1.72678 9.78999 2.82044H11.2999C11.6866 2.82044 12 3.13385 12 3.52044C12 3.90705 11.6866 4.22044 11.2999 4.22044H9.78993C9.48432 5.314 8.48064 6.11617 7.28959 6.11617C6.09854 6.11617 5.09485 5.314 4.78926 4.22044H0.799976C0.413377 4.22044 0.0999756 3.90705 0.0999756 3.52044C0.0999756 3.13385 0.413377 2.82044 0.799976 2.82044H4.7892ZM7.28953 4.71639C7.23965 4.71639 7.19048 4.71334 7.14218 4.7074L7.28953 4.71639ZM7.14218 4.7074C6.55126 4.63481 6.0937 4.13112 6.0937 3.52056C6.0937 3.2591 6.17758 3.01725 6.31991 2.82044C6.53715 2.51999 6.89047 2.3245 7.28959 2.3245C7.68865 2.3245 8.04209 2.51999 8.25932 2.82044C8.40166 3.01725 8.48536 3.2591 8.48536 3.52056C8.48536 3.78191 8.40148 4.02369 8.25926 4.22044C8.07446 4.47605 7.79108 4.65569 7.46488 4.70362C7.40765 4.71204 7.34909 4.71639 7.28953 4.71639" fill="#222" fillOpacity="0.75"/>
+            <path fillRule="evenodd" clipRule="evenodd" d="M2.69569 12.8245C3.88527 12.8245 4.88794 12.0243 5.19489 10.9328L11.3002 10.9286C11.6868 10.9284 11.9999 10.6148 11.9996 10.2282C11.9994 9.84155 11.6858 9.52835 11.2992 9.52865L5.19722 9.53285C4.89307 8.43705 3.88831 7.63281 2.69569 7.63281C1.26205 7.63281 0.0998535 8.79499 0.0998535 10.2286C0.0998535 11.6623 1.26205 12.8245 2.69569 12.8245ZM2.69569 9.03281C2.29375 9.03281 1.93812 9.23109 1.72132 9.53524C1.58178 9.73083 1.4998 9.97029 1.4998 10.2289C1.4998 10.8893 2.03519 11.4247 2.69563 11.4247C3.35607 11.4247 3.89146 10.8893 3.89146 10.2289C3.89146 9.9697 3.809 9.72972 3.66888 9.5339C3.45198 9.2305 3.09703 9.03281 2.69569 9.03281Z" fill="#222" fillOpacity="0.75"/>
             </svg>
             </span>
-            필터
+            맞춤 필터
           </button>
         </div>
       </div>
@@ -263,16 +367,27 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
           keywords={keywords}
           onKeywordChange={handleKeywordChange}
           currentKeyword={currentKeyword}
+          keywordCounts={isFilterActive ? keywordCountsLive : keywordCounts}
         />
       </div>
 
       {/* 리뷰 목록 */}
       <ReviewList 
-        reviews={reviewState.reviews}
+        reviews={filteredReviews}
         loading={reviewState.loading}
-        page={reviewState.page}
-        totalPages={reviewState.totalPages}
-        onPageChange={(page) => setReviewState(prev => ({ ...prev, page }))}
+        currentKeyword={currentKeyword}
+        filter={filter}
+      />
+      {isFetchingNextPage ? <div style={{textAlign:'center',padding:'16px'}}>로딩 중...</div> : <div ref={ref} />}
+      {!hasMore && <div style={{textAlign:'center',padding:'10px',color:'#aaa',fontSize:12}}>더 이상 리뷰가 없습니다.</div>}
+
+      {/* 바텀 구매 컴포넌트 영역 확보용 회색 컨테이너 */}
+      <div style={{ width: '100%', height: 160, background: '#fff' }} />
+
+      <FilterModal
+        open={filterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        onApply={handleFilterApply}
       />
     </div>
   );

@@ -5,6 +5,13 @@ interface RecommendKeywordsProps {
   keywords: Keyword[];
   onKeywordChange: (keyword: string) => void;
   currentKeyword: string;
+  keywordCounts?: {
+    all: number;
+    usage: number;
+    method: number;
+    part: number;
+    tip: number;
+  };
 }
 
 const styles = {
@@ -33,20 +40,33 @@ const styles = {
     fontWeight: 400,
     cursor: "pointer",
     whiteSpace: "nowrap" as const,
+    display: "flex",
+    gap: "4px",
   }),
+
+  count: {
+    fontSize: 11,
+    opacity: 0.8,
+  }
 };
 
-const RecommendKeywords = ({ keywords, onKeywordChange, currentKeyword }: RecommendKeywordsProps) => (
+const RecommendKeywords = ({ keywords, onKeywordChange, currentKeyword, keywordCounts }: RecommendKeywordsProps) => (
   <div style={styles.container} className="recommend-keyword-row">
-    {keywords.map((keyword: Keyword) => (
-      <button
-        key={keyword.id}
-        style={styles.button(currentKeyword === '' ? keyword.id === 'all' : keyword.id === currentKeyword)}
-        onClick={() => onKeywordChange(keyword.id)}
-      >
-        {keyword.label}
-      </button>
-    ))}
+    {keywords.map((keyword: Keyword) => {
+      const count = keywordCounts?.[keyword.id as keyof typeof keywordCounts] || 0;
+      return (
+        <button
+          key={keyword.id}
+          style={styles.button(currentKeyword === '' ? keyword.id === 'all' : keyword.id === currentKeyword)}
+          onClick={() => onKeywordChange(keyword.id)}
+        >
+          <span>{keyword.label}</span>
+          {keywordCounts && (
+            <span style={styles.count}>({count})</span>
+          )}
+        </button>
+      );
+    })}
   </div>
 );
 

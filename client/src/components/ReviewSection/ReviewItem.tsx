@@ -4,8 +4,19 @@
 //
 import React from "react";
 import { Review } from "../../types/reviewSection";
+import { highlightKeyword } from "../../utils/keywordHighlight";
 
-export interface ReviewItemProps extends Review {}
+export interface ReviewItemProps extends Review {
+  currentKeyword?: string;
+  skinType?: string;
+  skinTone?: string;
+  skinConcerns?: string[];
+  filter?: {
+    type?: string | null;
+    tone?: string | null;
+    issues?: string[];
+  };
+}
 
 const defaultProfile = "https://randomuser.me/api/portraits/women/44.jpg";
 const defaultBadgeColor = "rgb(240, 241, 244)";
@@ -21,26 +32,42 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
   content,
   likes = 0,
   images,
+  currentKeyword,
+  skinType,
+  skinTone,
+  skinConcerns,
+  filter,
 }) => {
   return (
     <div style={styles.card}>
-      <ReviewHeader user={userName} profileImage={profileImage} />
+      <ReviewHeader 
+        user={userName} 
+        profileImage={profileImage} 
+        skinType={skinType || ''}
+        skinTone={skinTone || ''}
+        skinConcerns={skinConcerns || []}
+        filter={filter}
+      />
       <ReviewStarsAndDate rating={rating} date={new Date(createdAt).toLocaleDateString()} />
       <ReviewMeta option={option} />
-      <ReviewContent content={content} />
+      <ReviewContent content={content} currentKeyword={currentKeyword} />
       {images && images.length > 0 && (
-        <img
-          src={images[0]}
-          alt="리뷰 이미지"
-          style={{
-            width: "100px",
-            height: "100px",
-            borderRadius: 4,
-            margin: "8px 0",
-            objectFit: "cover",
-            display: "block",
-          }}
-        />
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '8px 0' }}>
+          {images.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`리뷰 이미지 ${index + 1}`}
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: 4,
+                objectFit: "cover",
+                flexShrink: 0,
+              }}
+            />
+          ))}
+        </div>
       )}
       <ReviewActions
         likeCount={likes}
@@ -55,14 +82,54 @@ const ReviewItem: React.FC<ReviewItemProps> = ({
 const ReviewHeader: React.FC<{
   user: string;
   profileImage: string;
-}> = ({ user, profileImage }) => (
-  <div style={{ display: 'flex', alignItems: 'center', marginBottom:22 }}>
-    <img src={profileImage} alt="프로필" style={styles.profileImg} />
-    <div style={{ marginLeft: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-      <span style={{ fontWeight: 600, fontSize: 16 }}>{user}</span>
+  skinType?: string;
+  skinTone?: string;
+  skinConcerns?: string[];
+  filter?: {
+    type?: string | null;
+    tone?: string | null;
+    issues?: string[];
+  };
+}> = ({ user, profileImage, skinType, skinTone, skinConcerns, filter }) => {
+  // 값이 있으면만 표시, 없으면 아무것도 표시하지 않음
+  const infoArr = [skinType, skinTone, ...(skinConcerns || [])].filter(Boolean) as string[];
+
+  // 하이라이트 함수
+  const highlight = (text: string) => (
+    <span style={{
+      background: '#FFF3CD',
+      color: '#856404',
+      borderRadius: 2,
+      padding: '0 4px',
+      margin: '0 2px'
+    }}>{text}</span>
+  );
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom:22 }}>
+      <img src={profileImage} alt="프로필" style={styles.profileImg} />
+      <div style={{ marginLeft: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+        <span style={{ fontWeight: 600, fontSize: 16 }}>{user}</span>
+        {infoArr.length > 0 && (
+          <span style={{ fontSize: 12, color: '#99a1a8', fontWeight: 400 }}>
+            {infoArr.map((item, idx) => {
+              const key = item + '-' + idx;
+              // 필터와 일치하면 하이라이트
+              if (
+                (filter?.type && item === filter.type) ||
+                (filter?.tone && item === filter.tone) ||
+                (filter?.issues && filter.issues.includes(item))
+              ) {
+                return <React.Fragment key={key}>{highlight(item)}{idx < infoArr.length - 1 && ' · '}</React.Fragment>;
+              }
+              return <React.Fragment key={key}>{item}{idx < infoArr.length - 1 && ' · '}</React.Fragment>;
+            })}
+          </span>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ReviewStarsAndDate: React.FC<{ rating: number; date: string }> = ({ rating, date }) => (
   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4, marginLeft: 0 }}>
@@ -77,8 +144,10 @@ const ReviewMeta: React.FC<{
   option ? <div style={styles.option}>[옵션] {option}</div> : null
 );
 
-const ReviewContent: React.FC<{ content: string }> = ({ content }) => (
-  <div style={styles.content}>{content}</div>
+const ReviewContent: React.FC<{ content: string; currentKeyword?: string }> = ({ content, currentKeyword }) => (
+  <div style={styles.content}>
+    {currentKeyword ? highlightKeyword(content, currentKeyword) : content}
+  </div>
 );
 
 const ReviewInfo: React.FC<{ infoText?: string }> = ({ infoText }) => (
@@ -156,6 +225,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: '21px',
     marginTop: 6,
     marginBottom: 8,
+    whiteSpace: 'pre-wrap',
   },
   info: {
     fontSize: 12,

@@ -2,29 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
 const Product = require('../models/Product');
-
-// 응답 헬퍼 함수
-const sendSuccess = (res, data) => {
-  res.json({
-    success: true,
-    data: data,
-    message: null
-  });
-};
-
-const sendError = (res, status, message) => {
-  res.status(status).json({
-    success: false,
-    data: null,
-    message: message
-  });
-};
+const { sendSuccess, sendError } = require('../utils/responseHelper');
 
 // 상품의 리뷰 목록 조회 (페이지네이션)
 router.get('/products/:productId/reviews', async (req, res) => {
   try {
     const { productId } = req.params;
-    const { page = 1, limit = 10, sort = '-createdAt', keyword } = req.query;
+    const { page = 1, limit = 10, sort = '-createdAt', keyword, rating, type, tone, reviewType, issues } = req.query;
 
     // 정렬 필드 매핑
     const sortMapping = {
@@ -36,7 +20,30 @@ router.get('/products/:productId/reviews', async (req, res) => {
     // 검색 조건 설정
     const query = { productId };
     if (keyword && keyword !== 'all') {
-      query.content = { $regex: keyword, $options: 'i' };
+      // 키워드별 검색 조건 매핑
+      const keywordMapping = {
+        'usage': /(사용감|제형|발림성|발리기|바르기|발라|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i,
+        'method': /(사용방법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|사용법|적용법|도포법)/i,
+        'part': /(사용부위|부위|얼굴|이마|볼|코|턱|관자놀이|T존|U존|윗입술|아랫입술|눈가|눈밑|눈위|눈옆|눈앞|눈뒤|눈앞|눈뒤|눈가|눈밑|눈위|눈옆|눈앞|눈뒤)/i,
+        'tip': /(사용팁|팁|꿀팁|노하우|조언|추천|추천법|사용법|적용법|도포법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i
+      };
+      
+      if (keywordMapping[keyword]) {
+        query.content = keywordMapping[keyword];
+      } else {
+        // 기본 검색 (기존 로직)
+        query.content = { $regex: keyword, $options: 'i' };
+      }
+    }
+
+    // 맞춤 필터 파라미터 처리
+    if (rating) query.rating = Number(rating);
+    if (type) query.skinType = type;
+    if (tone) query.skinTone = tone;
+    if (reviewType) query.reviewType = reviewType;
+    if (issues) {
+      const issuesArr = Array.isArray(issues) ? issues : issues.split(',');
+      query.skinConcerns = { $in: issuesArr };
     }
 
     const reviews = await Review.find(query)
@@ -55,7 +62,7 @@ router.get('/products/:productId/reviews', async (req, res) => {
     });
   } catch (error) {
     console.error('리뷰 목록 조회 실패:', error);
-    sendError(res, 500, '리뷰 목록을 불러오는데 실패했습니다.');
+    sendError(res, '리뷰 목록을 불러오는데 실패했습니다.');
   }
 });
 
@@ -73,7 +80,7 @@ router.post('/products/:productId/reviews', async (req, res) => {
     sendSuccess(res, review);
   } catch (error) {
     console.error('리뷰 작성 실패:', error);
-    sendError(res, 500, '리뷰 작성에 실패했습니다.');
+    sendError(res, '리뷰 작성에 실패했습니다.');
   }
 });
 
@@ -88,7 +95,7 @@ router.put('/reviews/:reviewId', async (req, res) => {
     );
 
     if (!review) {
-      return sendError(res, 404, '리뷰를 찾을 수 없습니다.');
+      return sendError(res, '리뷰를 찾을 수 없습니다.', 404);
     }
 
     // 상품의 리뷰 통계 업데이트
@@ -97,7 +104,7 @@ router.put('/reviews/:reviewId', async (req, res) => {
     sendSuccess(res, review);
   } catch (error) {
     console.error('리뷰 수정 실패:', error);
-    sendError(res, 500, '리뷰 수정에 실패했습니다.');
+    sendError(res, '리뷰 수정에 실패했습니다.');
   }
 });
 
@@ -107,7 +114,7 @@ router.delete('/reviews/:reviewId', async (req, res) => {
     const review = await Review.findByIdAndDelete(req.params.reviewId);
     
     if (!review) {
-      return sendError(res, 404, '리뷰를 찾을 수 없습니다.');
+      return sendError(res, '리뷰를 찾을 수 없습니다.', 404);
     }
 
     // 상품의 리뷰 통계 업데이트
@@ -116,7 +123,7 @@ router.delete('/reviews/:reviewId', async (req, res) => {
     sendSuccess(res, { message: '리뷰가 삭제되었습니다.' });
   } catch (error) {
     console.error('리뷰 삭제 실패:', error);
-    sendError(res, 500, '리뷰 삭제에 실패했습니다.');
+    sendError(res, '리뷰 삭제에 실패했습니다.');
   }
 });
 
@@ -145,5 +152,45 @@ async function updateProductReviewStats(productId) {
     }
   });
 }
+
+// 키워드별 리뷰 수 조회
+router.get('/products/:productId/reviews/keyword-counts', async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // 키워드별 검색 패턴
+    const keywordPatterns = {
+      'usage': /(사용감|제형|발림성|발리기|바르기|발라|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i,
+      'method': /(사용방법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|사용법|적용법|도포법)/i,
+      'part': /(사용부위|부위|얼굴|이마|볼|코|턱|관자놀이|T존|U존|윗입술|아랫입술|눈가|눈밑|눈위|눈옆|눈앞|눈뒤)/i,
+      'tip': /(사용팁|팁|꿀팁|노하우|조언|추천|추천법|사용법|적용법|도포법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i
+    };
+
+    const allReviews = await Review.find({ productId });
+    const totalCount = allReviews.length;
+
+    const keywordCounts = {
+      all: totalCount,
+      usage: 0,
+      method: 0,
+      part: 0,
+      tip: 0
+    };
+
+    // 각 키워드별 리뷰 수 계산
+    allReviews.forEach(review => {
+      Object.keys(keywordPatterns).forEach(keyword => {
+        if (keywordPatterns[keyword].test(review.content)) {
+          keywordCounts[keyword]++;
+        }
+      });
+    });
+
+    sendSuccess(res, keywordCounts);
+  } catch (error) {
+    console.error('키워드별 리뷰 수 조회 실패:', error);
+    sendError(res, '키워드별 리뷰 수를 불러오는데 실패했습니다.');
+  }
+});
 
 module.exports = router; 

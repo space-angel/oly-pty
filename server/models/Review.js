@@ -28,7 +28,7 @@ const reviewSchema = new mongoose.Schema({
   content: {
     type: String,
     required: true,
-    maxlength: 1000
+    maxlength: 5000
   },
   images: {
     type: [String],
@@ -38,7 +38,23 @@ const reviewSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  option: String
+  option: String,
+  skinType: {
+    type: String,
+    default: ''
+  },
+  skinTone: {
+    type: String,
+    default: ''
+  },
+  skinConcerns: {
+    type: [String],
+    default: []
+  },
+  reviewType: {
+    type: String,
+    default: '일반리뷰'
+  },
 }, {
   timestamps: true
 });

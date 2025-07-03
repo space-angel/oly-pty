@@ -11,6 +11,9 @@ export interface Review {
   option?: string;
   createdAt: string;
   updatedAt: string;
+  skinType?: string;
+  skinTone?: string;
+  skinConcerns?: string[];
 }
 
 export interface ReviewPhoto {

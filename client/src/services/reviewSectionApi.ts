@@ -8,6 +8,11 @@ interface GetReviewsParams {
   limit?: number;
   sort?: string;
   keyword?: string;
+  type?: string;
+  tone?: string;
+  issues?: string[];
+  reviewType?: string;
+  rating?: number;
 }
 
 class ReviewSectionApi {
@@ -27,7 +32,12 @@ class ReviewSectionApi {
     page = 1,
     limit = 10,
     sort = 'createdAt',
-    keyword
+    keyword,
+    type,
+    tone,
+    issues,
+    reviewType,
+    rating
   }: GetReviewsParams): Promise<{
     reviews: Review[];
     total: number;
@@ -39,7 +49,12 @@ class ReviewSectionApi {
         page: page.toString(),
         limit: limit.toString(),
         sort,
-        ...(keyword && { keyword })
+        ...(keyword && { keyword }),
+        ...(type && { type }),
+        ...(tone && { tone }),
+        ...(reviewType && { reviewType }),
+        ...(rating !== undefined && rating !== null && { rating: rating.toString() }),
+        ...(issues && issues.length > 0 && { issues: issues.join(',') }),
       });
 
       const response = await apiClient.get<ApiResponse<{
@@ -56,6 +71,32 @@ class ReviewSectionApi {
       return response.data.data;
     } catch (error) {
       return handleApiError(error as AxiosError, '리뷰 목록 조회');
+    }
+  }
+
+  async getKeywordCounts(productId: string): Promise<{
+    all: number;
+    usage: number;
+    method: number;
+    part: number;
+    tip: number;
+  }> {
+    try {
+      const response = await apiClient.get<ApiResponse<{
+        all: number;
+        usage: number;
+        method: number;
+        part: number;
+        tip: number;
+      }>>(`/products/${productId}/reviews/keyword-counts`);
+
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || '키워드별 리뷰 수를 가져오는데 실패했습니다.');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      return handleApiError(error as AxiosError, '키워드별 리뷰 수 조회');
     }
   }
 
