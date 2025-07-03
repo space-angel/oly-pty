@@ -22,15 +22,11 @@ function ServerLoader() {
         // Render 서버의 health 체크 엔드포인트로 요청 (예: /api/health)
         const res = await fetch("/api/health");
         if (res.ok && isMounted) {
-          setLoading(false);
-          // 서버가 살아나면 새로고침
-          window.location.reload();
+          setLoading(false); // 새로고침 없이 로딩만 종료
         } else {
-          // 서버가 아직 준비 안 됨
           setTimeout(checkServer, 3000);
         }
       } catch {
-        // 네트워크 에러 등: 3초 후 재시도
         setTimeout(checkServer, 3000);
       }
     };
@@ -44,7 +40,6 @@ function ServerLoader() {
   return (
     <div style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'white', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
       <p>서버를 깨우는 중입니다... 잠시만 기다려주세요.</p>
-      {/* 로딩 스피너 등 추가 가능 */}
     </div>
   );
 }
