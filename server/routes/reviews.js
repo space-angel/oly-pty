@@ -8,7 +8,7 @@ const { sendSuccess, sendError } = require('../utils/responseHelper');
 router.get('/products/:productId/reviews', async (req, res) => {
   try {
     const { productId } = req.params;
-    const { page = 1, limit = 10, sort = '-createdAt', keyword } = req.query;
+    const { page = 1, limit = 10, sort = '-createdAt', keyword, rating, type, tone, reviewType, issues } = req.query;
 
     // 정렬 필드 매핑
     const sortMapping = {
@@ -22,7 +22,7 @@ router.get('/products/:productId/reviews', async (req, res) => {
     if (keyword && keyword !== 'all') {
       // 키워드별 검색 조건 매핑
       const keywordMapping = {
-        'usage': /(사용감|제형|발림성|발리기|바르기|발라|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|바르며|바르면|바르니|바르는데|바르는|바르며)/i,
+        'usage': /(사용감|제형|발림성|발리기|바르기|발라|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i,
         'method': /(사용방법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며|사용법|적용법|도포법)/i,
         'part': /(사용부위|부위|얼굴|이마|볼|코|턱|관자놀이|T존|U존|윗입술|아랫입술|눈가|눈밑|눈위|눈옆|눈앞|눈뒤|눈앞|눈뒤|눈가|눈밑|눈위|눈옆|눈앞|눈뒤)/i,
         'tip': /(사용팁|팁|꿀팁|노하우|조언|추천|추천법|사용법|적용법|도포법|바르는법|발라|바르기|바른|발라서|바르고|바르면|바르니|바르는데|바르는|바르며)/i
@@ -34,6 +34,16 @@ router.get('/products/:productId/reviews', async (req, res) => {
         // 기본 검색 (기존 로직)
         query.content = { $regex: keyword, $options: 'i' };
       }
+    }
+
+    // 맞춤 필터 파라미터 처리
+    if (rating) query.rating = Number(rating);
+    if (type) query.skinType = type;
+    if (tone) query.skinTone = tone;
+    if (reviewType) query.reviewType = reviewType;
+    if (issues) {
+      const issuesArr = Array.isArray(issues) ? issues : issues.split(',');
+      query.skinConcerns = { $in: issuesArr };
     }
 
     const reviews = await Review.find(query)

@@ -59,8 +59,9 @@ const ReviewList: React.FC<ReviewListProps> = ({
     <div>
       {reviews.map((review, idx) => {
         const isLast = idx === reviews.length - 1;
+        const key = (review._id || idx) + '-' + idx;
         return (
-          <React.Fragment key={review._id}>
+          <React.Fragment key={key}>
             <div ref={isLast && lastReviewRef ? lastReviewRef : undefined}>
               <ReviewItem {...review} currentKeyword={currentKeyword} filter={filter} />
             </div>

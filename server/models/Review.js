@@ -51,6 +51,10 @@ const reviewSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  reviewType: {
+    type: String,
+    default: '일반리뷰'
+  },
 }, {
   timestamps: true
 });

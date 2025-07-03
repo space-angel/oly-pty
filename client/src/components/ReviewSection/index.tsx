@@ -6,6 +6,7 @@ import RecommendKeywords from "./RecommendKeywords";
 import { reviewSectionApi } from "../../services/reviewSectionApi";
 import FilterModal from "./FilterModal";
 import { hasKeyword } from "../../utils/keywordHighlight";
+import { useInView } from 'react-intersection-observer';
 
 interface ReviewSectionProps {
   product: Product;
@@ -167,7 +168,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     total: 0,
     page: 1,
     totalPages: 1,
-    loading: true
+    loading: false
   });
   const [currentSort, setCurrentSort] = useState('createdAt');
   const [currentKeyword, setCurrentKeyword] = useState('');
@@ -186,20 +187,11 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     reviewType: null as string | null,
     rating: null as number | null,
   });
-  const pageSize = 10;
+  const pageSize = 9999;
 
   const [hasMore, setHasMore] = useState(true);
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastReviewRef = useCallback((node: HTMLDivElement | null) => {
-    if (reviewState.loading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new window.IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setReviewState(prev => ({ ...prev, page: prev.page + 1 }));
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [reviewState.loading, hasMore]);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const { ref, inView } = useInView();
 
   const sortOptions = [
     { label: "최신순", value: "createdAt", active: true, info: false },
@@ -215,27 +207,38 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     { id: "tip", label: "#사용팁" },
   ];
 
-  const fetchReviews = async (reset = false) => {
+  const fetchReviews = async ({ reset = false, page = 1, filterArg = filter, sortArg = currentSort, keywordArg = currentKeyword } = {}) => {
     try {
-      setReviewState(prev => ({ ...prev, loading: true }));
+      if (reset) setReviewState(prev => ({ ...prev, loading: true }));
+      setIsFetchingNextPage(true);
+      const cleanFilter = {
+        ...filterArg,
+        type: filterArg.type ?? undefined,
+        tone: filterArg.tone ?? undefined,
+        reviewType: filterArg.reviewType ?? undefined,
+        rating: filterArg.rating ?? undefined,
+      };
       const result = await reviewSectionApi.getReviews({
         productId: product._id,
-        page: reset ? 1 : reviewState.page,
+        page,
         limit: pageSize,
-        sort: currentSort,
-        keyword: currentKeyword
+        sort: sortArg,
+        keyword: keywordArg,
+        ...cleanFilter
       });
       setReviewState(prev => ({
         ...prev,
         reviews: reset ? result.reviews : [...prev.reviews, ...result.reviews],
         total: result.total,
         totalPages: result.totalPages,
+        page,
         loading: false
       }));
       setHasMore(result.page < result.totalPages);
+      setIsFetchingNextPage(false);
     } catch (error) {
-      console.error('리뷰 로딩 실패:', error);
       setReviewState(prev => ({ ...prev, loading: false }));
+      setIsFetchingNextPage(false);
     }
   };
 
@@ -244,14 +247,22 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
       const counts = await reviewSectionApi.getKeywordCounts(product._id);
       setKeywordCounts(counts);
     } catch (error) {
-      console.error('키워드별 리뷰 수 로딩 실패:', error);
     }
   };
 
   useEffect(() => {
-    fetchReviews(reviewState.page === 1);
+    setReviewState(prev => ({ ...prev, reviews: [], page: 1, loading: true }));
+    setHasMore(true);
+    fetchReviews({ reset: true, page: 1, filterArg: filter, sortArg: currentSort, keywordArg: currentKeyword });
     // eslint-disable-next-line
-  }, [product._id, reviewState.page, currentSort, currentKeyword]);
+  }, [product._id, currentSort, currentKeyword, filter]);
+
+  useEffect(() => {
+    if (inView && hasMore && !reviewState.loading && !isFetchingNextPage) {
+      fetchReviews({ page: reviewState.page + 1, filterArg: filter, sortArg: currentSort, keywordArg: currentKeyword });
+    }
+    // eslint-disable-next-line
+  }, [inView, hasMore, reviewState.loading, isFetchingNextPage, reviewState.page, filter, currentSort, currentKeyword]);
 
   useEffect(() => {
     fetchKeywordCounts();
@@ -305,8 +316,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   const isFilterActive = !!(filter.type || filter.tone || filter.issues.length > 0 || filter.reviewType || filter.rating);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.title}>전체 리뷰 ({filteredReviews.length})</div>
+    <div style={styles.container}>  
+      <div style={styles.title}>전체 리뷰 ({reviewState.total})</div>
 
       {/* 상단 정렬/필터 */}
       <div style={styles.header}>
@@ -356,7 +367,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
           keywords={keywords}
           onKeywordChange={handleKeywordChange}
           currentKeyword={currentKeyword}
-          keywordCounts={keywordCountsLive}
+          keywordCounts={isFilterActive ? keywordCountsLive : keywordCounts}
         />
       </div>
 
@@ -364,10 +375,14 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
       <ReviewList 
         reviews={filteredReviews}
         loading={reviewState.loading}
-        lastReviewRef={lastReviewRef}
+        currentKeyword={currentKeyword}
+        filter={filter}
       />
-      {reviewState.loading && <div style={{textAlign:'center',padding:'16px'}}>로딩 중...</div>}
-      {!hasMore && <div style={{textAlign:'center',padding:'16px',color:'#aaa'}}>더 이상 리뷰가 없습니다.</div>}
+      {isFetchingNextPage ? <div style={{textAlign:'center',padding:'16px'}}>로딩 중...</div> : <div ref={ref} />}
+      {!hasMore && <div style={{textAlign:'center',padding:'10px',color:'#aaa',fontSize:12}}>더 이상 리뷰가 없습니다.</div>}
+
+      {/* 바텀 구매 컴포넌트 영역 확보용 회색 컨테이너 */}
+      <div style={{ width: '100%', height: 160, background: '#fff' }} />
 
       <FilterModal
         open={filterModalOpen}

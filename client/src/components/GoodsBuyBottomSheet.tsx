@@ -12,7 +12,7 @@ const options = [
   { key: '23N 진저', title: '[파우더팩트 기획] 23N 진저', rate: 25, price: 27000, flag: '일시품절', soldout: true },
 ];
 
-const openBarSvg = `url("data:image/svg+xml,%3Csvg width='35' height='8' viewBox='0 0 35 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M0.620775 1.03858C0.987058 0.211232 2.0758 -0.207954 3.05256 0.102301L17.5 4.69138L31.9474 0.102301C32.9242 -0.207954 34.0129 0.211232 34.3792 1.03858C34.7455 1.86593 34.2506 2.78814 33.2739 3.09839L18.1632 7.89813C17.7356 8.03396 17.2644 8.03396 16.8368 7.89813L1.72613 3.09839C0.749377 2.78814 0.254493 1.86593 0.620775 1.03858Z' fill='%23E5E7EA'/%3E%3C/svg%3E")`;
+const openBarSvg = `url("data:image/svg+xml,%3Csvg width='35' height='8' viewBox='0 0 35 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fillRule='evenodd' clipRule='evenodd' d='M0.620775 1.03858C0.987058 0.211232 2.0758 -0.207954 3.05256 0.102301L17.5 4.69138L31.9474 0.102301C32.9242 -0.207954 34.0129 0.211232 34.3792 1.03858C34.7455 1.86593 34.2506 2.78814 33.2739 3.09839L18.1632 7.89813C17.7356 8.03396 17.2644 8.03396 16.8368 7.89813L1.72613 3.09839C0.749377 2.78814 0.254493 1.86593 0.620775 1.03858Z' fill='%23E5E7EA'/%3E%3C/svg%3E")`;
 
 const giftSvg = (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

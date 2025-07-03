@@ -113,15 +113,16 @@ const ReviewHeader: React.FC<{
         {infoArr.length > 0 && (
           <span style={{ fontSize: 12, color: '#99a1a8', fontWeight: 400 }}>
             {infoArr.map((item, idx) => {
+              const key = item + '-' + idx;
               // 필터와 일치하면 하이라이트
               if (
                 (filter?.type && item === filter.type) ||
                 (filter?.tone && item === filter.tone) ||
                 (filter?.issues && filter.issues.includes(item))
               ) {
-                return <React.Fragment key={item}>{highlight(item)}{idx < infoArr.length - 1 && ' · '}</React.Fragment>;
+                return <React.Fragment key={key}>{highlight(item)}{idx < infoArr.length - 1 && ' · '}</React.Fragment>;
               }
-              return <React.Fragment key={item}>{item}{idx < infoArr.length - 1 && ' · '}</React.Fragment>;
+              return <React.Fragment key={key}>{item}{idx < infoArr.length - 1 && ' · '}</React.Fragment>;
             })}
           </span>
         )}

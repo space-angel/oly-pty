@@ -8,6 +8,11 @@ interface GetReviewsParams {
   limit?: number;
   sort?: string;
   keyword?: string;
+  type?: string;
+  tone?: string;
+  issues?: string[];
+  reviewType?: string;
+  rating?: number;
 }
 
 class ReviewSectionApi {
@@ -27,7 +32,12 @@ class ReviewSectionApi {
     page = 1,
     limit = 10,
     sort = 'createdAt',
-    keyword
+    keyword,
+    type,
+    tone,
+    issues,
+    reviewType,
+    rating
   }: GetReviewsParams): Promise<{
     reviews: Review[];
     total: number;
@@ -39,7 +49,12 @@ class ReviewSectionApi {
         page: page.toString(),
         limit: limit.toString(),
         sort,
-        ...(keyword && { keyword })
+        ...(keyword && { keyword }),
+        ...(type && { type }),
+        ...(tone && { tone }),
+        ...(reviewType && { reviewType }),
+        ...(rating !== undefined && rating !== null && { rating: rating.toString() }),
+        ...(issues && issues.length > 0 && { issues: issues.join(',') }),
       });
 
       const response = await apiClient.get<ApiResponse<{

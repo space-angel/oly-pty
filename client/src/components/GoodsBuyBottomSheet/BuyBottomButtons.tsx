@@ -80,7 +80,7 @@ const hiddenCheckboxStyle: React.CSSProperties = {
 };
 
 const svgDefault = "data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.500488' width='19' height='19' rx='1.5' fill='white' stroke='%23C9CDD2'/%3E%3C/svg%3E";
-const svgChecked = "data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.500488' width='19' height='19' rx='1.5' fill='white' stroke='%2382DC28' stroke-width='2'/%3E%3Cpath d='M6 10.5L9 13.5L14 8.5' stroke='%2382DC28' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+const svgChecked = "data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.500488' width='19' height='19' rx='1.5' fill='white' stroke='%2382DC28' strokeWidth='2'/%3E%3Cpath d='M6 10.5L9 13.5L14 8.5' stroke='%2382DC28' strokeWidth='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 
 const BuyBottomButtons: React.FC<BuyBottomButtonsProps> = ({ today, onTodayChange, giftSvg }) => {
   return (
