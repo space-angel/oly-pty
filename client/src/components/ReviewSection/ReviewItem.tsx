@@ -5,6 +5,7 @@
 import React from "react";
 import { Review } from "../../types/reviewSection";
 import { highlightKeyword } from "../../utils/keywordHighlight";
+import { track as amplitudeTrack } from '@amplitude/analytics-browser';
 
 declare global {
   interface Window {
@@ -175,12 +176,10 @@ const ReviewActions: React.FC<{
   productId?: string;
 }> = ({ likeCount, style, reviewId, productId }) => {
   const handleHelpfulClick = () => {
-    if (window.amplitude) {
-      window.amplitude.track('review_helpful_click', {
-        review_id: reviewId,
-        product_id: productId
-      });
-    }
+    amplitudeTrack('review_helpful_click', {
+      review_id: reviewId,
+      product_id: productId
+    });
   };
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...style }}>

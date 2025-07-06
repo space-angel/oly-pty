@@ -8,6 +8,7 @@ import SatisfactionRow from "./SatisfactionRow";
 import RatingSummary from "./RatingSummary";
 import { Product } from "../../types/product";
 import { SatisfactionDetail } from "../../types/reviewSummary";
+import { track as amplitudeTrack } from '@amplitude/analytics-browser';
 
 interface ReviewSummaryProps {
   product: Product;
@@ -182,12 +183,10 @@ const ReviewSummary: React.FC<ReviewSummaryProps> = ({ product }) => {
 
   const handleToggle = () => {
     setShowDetail(v => !v);
-    if (window.amplitude) {
-      window.amplitude.track('review_summary_toggle', {
-        expanded: !showDetail,
-        product_id: product._id
-      });
-    }
+    amplitudeTrack('review_summary_toggle', {
+      expanded: !showDetail,
+      product_id: product._id
+    });
   };
 
   if (!product.reviewSummary) {
