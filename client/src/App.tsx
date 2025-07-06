@@ -8,7 +8,7 @@ import GoodsInfoPrimary from './components/GoodsInfo-Primary/GoodsInfoPrimary';
 import GoodsInfoSecondary from './components/GoodsInfo-Secondary/GoodsInfoSecondary';
 import HeaderBar from './components/HeaderBar';
 import GoodsBuyBottomSheet from './components/GoodsBuyBottomSheet';
-import amplitude from '@amplitude/analytics-browser';
+import { init as amplitudeInit } from '@amplitude/analytics-browser';
 
 const HEADER_HEIGHT = 56;
 
@@ -83,7 +83,7 @@ function App() {
   }, [bottomSheetOpen]);
 
   useEffect(() => {
-    amplitude.init('debfff97a263690087bffbc6473387fb', {
+    amplitudeInit('debfff97a263690087bffbc6473387fb', {
       defaultTracking: true
     });
   }, []);
