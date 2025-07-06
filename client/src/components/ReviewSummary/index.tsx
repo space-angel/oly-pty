@@ -180,6 +180,16 @@ const styles = {
 const ReviewSummary: React.FC<ReviewSummaryProps> = ({ product }) => {
   const [showDetail, setShowDetail] = useState(false);
 
+  const handleToggle = () => {
+    setShowDetail(v => !v);
+    if (window.amplitude) {
+      window.amplitude.track('review_summary_toggle', {
+        expanded: !showDetail,
+        product_id: product._id
+      });
+    }
+  };
+
   if (!product.reviewSummary) {
     return (
       <div style={{
@@ -268,7 +278,7 @@ const ReviewSummary: React.FC<ReviewSummaryProps> = ({ product }) => {
             alignItems: 'center',
             gap: 4,
           }}
-          onClick={() => setShowDetail(v => !v)}
+          onClick={handleToggle}
         >
           {showDetail ? '접기' : '자세히'}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{transition:'transform 0.2s', transform: showDetail ? 'rotate(180deg)' : 'none'}}>
@@ -279,5 +289,11 @@ const ReviewSummary: React.FC<ReviewSummaryProps> = ({ product }) => {
     </div>
   );
 };
+
+declare global {
+  interface Window {
+    amplitude?: any;
+  }
+}
 
 export default ReviewSummary; 

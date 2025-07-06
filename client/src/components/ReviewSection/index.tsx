@@ -8,6 +8,12 @@ import FilterModal from "./FilterModal";
 import { hasKeyword } from "../../utils/keywordHighlight";
 import { useInView } from 'react-intersection-observer';
 
+declare global {
+  interface Window {
+    amplitude?: any;
+  }
+}
+
 interface ReviewSectionProps {
   product: Product;
 }
@@ -268,29 +274,72 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     fetchKeywordCounts();
   }, [product._id]);
 
-  const handleSortChange = (sort: string) => {
-    setCurrentSort(sort);
+  // 상품 상세 진입 트래킹
+  useEffect(() => {
+    if (window.amplitude && product?._id) {
+      window.amplitude.track('goods_detail_view', {
+        product_id: product._id,
+        product_name: product.name
+      });
+    }
+  }, [product?._id]);
+
+  // 리뷰 무한 스크롤 트래킹
+  useEffect(() => {
+    if (inView && hasMore && window.amplitude) {
+      window.amplitude.track('review_scroll_depth', {
+        page: reviewState.page,
+        product_id: product._id
+      });
+    }
+  }, [inView]);
+
+  const handleSortChange = (sortType: string) => {
+    setCurrentSort(sortType);
+    if (window.amplitude) {
+      window.amplitude.track('review_sort_changed', {
+        sort_type: sortType,
+        product_id: product._id
+      });
+    }
     setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
     setHasMore(true);
   };
 
   const handleKeywordChange = (keyword: string) => {
-    setCurrentKeyword(keyword === 'all' ? '' : keyword);
+    setCurrentKeyword(keyword);
+    if (window.amplitude) {
+      window.amplitude.track('review_keyword_click', {
+        keyword_type: keyword,
+        product_id: product._id
+      });
+    }
     setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
     setHasMore(true);
   };
 
-  const handleFilterApply = (filterValues: { type: string | null; tone: string | null; issues: string[]; reviewType?: string | null; rating?: number | null }) => {
-    setFilter({
-      type: filterValues.type,
-      tone: filterValues.tone,
-      issues: filterValues.issues,
-      reviewType: filterValues.reviewType || null,
-      rating: filterValues.rating || null,
-    });
+  const handleFilterApply = (filter: any) => {
+    setFilter(filter);
+    setFilterModalOpen(false);
+    if (window.amplitude) {
+      window.amplitude.track('review_filter_applied', {
+        ...filter,
+        product_id: product._id
+      });
+    }
     setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
     setHasMore(true);
-    setFilterModalOpen(false);
+  };
+
+  const handleFilterReset = () => {
+    setFilter({ type: null, tone: null, issues: [], reviewType: null, rating: null });
+    if (window.amplitude) {
+      window.amplitude.track('review_filter_reset', {
+        product_id: product._id
+      });
+    }
+    setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
+    setHasMore(true);
   };
 
   const filteredReviews = reviewState.reviews.filter(review => {
@@ -388,6 +437,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
         open={filterModalOpen}
         onClose={() => setFilterModalOpen(false)}
         onApply={handleFilterApply}
+        onReset={handleFilterReset}
       />
     </div>
   );
