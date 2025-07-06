@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import styled, { css } from "styled-components";
 
-interface FilterModalProps {
+export interface FilterModalProps {
   open: boolean;
   onClose: () => void;
-  onApply: (filterValues: { type: string | null; tone: string | null; issues: string[]; reviewType: string | null; rating: number | null }) => void;
+  onApply: (filter: any) => void;
+  onReset?: () => void;
 }
 
 interface ChipProps {
@@ -281,7 +282,7 @@ const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
   }
 `;
 
-const FilterModal: React.FC<FilterModalProps> = ({ open, onClose, onApply }) => {
+const FilterModal: React.FC<FilterModalProps> = ({ open, onClose, onApply, onReset }) => {
   // 선택 상태 관리 예시 (기존 필터만)
   const [skinType, setSkinType] = useState('전체');
   const [skinTone, setSkinTone] = useState('전체');
@@ -427,19 +428,23 @@ const FilterModal: React.FC<FilterModalProps> = ({ open, onClose, onApply }) => 
             setSelectedConditionType(null);
             setSelectedConditionTone(null);
             setSelectedConditionIssues([]);
+            if (onReset) onReset();
           }}>
             <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10.9964 1.7915C6.13252 1.7915 2.16661 5.67361 2.16661 10.4998C2.16661 15.3261 6.13252 19.2082 10.9964 19.2082C15.1045 19.2082 18.5659 16.4467 19.5507 12.6819C19.6905 12.1477 19.3707 11.6012 18.8364 11.4614C18.3021 11.3217 17.7556 11.6415 17.6158 12.1758C16.8607 15.0623 14.193 17.2082 10.9964 17.2082C7.20752 17.2082 4.16661 14.1922 4.16661 10.4998C4.16661 6.80755 7.20752 3.7915 10.9964 3.7915C13.3262 3.7915 15.3722 4.93042 16.6067 6.667H14.5415C13.9892 6.667 13.5415 7.11471 13.5415 7.667C13.5415 8.21928 13.9892 8.667 14.5415 8.667H18.7082C19.2605 8.667 19.7082 8.21928 19.7082 7.667V3.50033C19.7082 2.94805 19.2605 2.50033 18.7082 2.50033C18.1559 2.50033 17.7082 2.94805 17.7082 3.50033V4.83673C16.087 2.97109 13.6834 1.7915 10.9964 1.7915Z" fill="#3C3C3C" fill-opacity="0.75"/>
             </svg>
             초기화
           </ResetButton>
-          <ApplyButton onClick={() => onApply({
-            type: selectedConditionType === '전체' ? null : selectedConditionType,
-            tone: selectedConditionTone === '전체' ? null : selectedConditionTone,
-            issues: selectedConditionIssues,
-            reviewType: skinType === '전체' ? null : skinType,
-            rating: skinTone === '전체' ? null : (skinTone.replace('점', '') === skinTone ? null : Number(skinTone.replace('점', ''))),
-          })}>적용하기</ApplyButton>
+          <ApplyButton onClick={() => {
+            const filterObj = {
+              type: selectedConditionType === '전체' ? null : selectedConditionType,
+              tone: selectedConditionTone === '전체' ? null : selectedConditionTone,
+              issues: selectedConditionIssues,
+              reviewType: skinType === '전체' ? null : skinType,
+              rating: skinTone === '전체' ? null : (skinTone.replace('점', '') === skinTone ? null : Number(skinTone.replace('점', ''))),
+            };
+            onApply(filterObj);
+          }}>적용하기</ApplyButton>
         </ModalFooter>
       </ModalContainer>
     </ModalBackdrop>
