@@ -8,6 +8,7 @@ import GoodsInfoPrimary from './components/GoodsInfo-Primary/GoodsInfoPrimary';
 import GoodsInfoSecondary from './components/GoodsInfo-Secondary/GoodsInfoSecondary';
 import HeaderBar from './components/HeaderBar';
 import GoodsBuyBottomSheet from './components/GoodsBuyBottomSheet';
+import amplitude from '@amplitude/analytics-browser';
 
 const HEADER_HEIGHT = 56;
 
@@ -80,6 +81,12 @@ function App() {
       document.body.style.overflow = '';
     };
   }, [bottomSheetOpen]);
+
+  useEffect(() => {
+    amplitude.init('debfff97a263690087bffbc6473387fb', {
+      defaultTracking: true
+    });
+  }, []);
 
   if (loading) {
     return  <div style={{textAlign:'center',padding:'75% 0',color:'#aaa',fontSize:14,lineHeight:2}}>
