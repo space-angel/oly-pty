@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { track as amplitudeTrack } from '@amplitude/analytics-browser';
 
 interface BuyBottomButtonsProps {
   today: boolean;
@@ -83,6 +84,21 @@ const svgDefault = "data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 
 const svgChecked = "data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0.5' y='0.500488' width='19' height='19' rx='1.5' fill='white' stroke='%2382DC28' strokeWidth='2'/%3E%3Cpath d='M6 10.5L9 13.5L14 8.5' stroke='%2382DC28' strokeWidth='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
 
 const BuyBottomButtons: React.FC<BuyBottomButtonsProps> = ({ today, onTodayChange, giftSvg }) => {
+  // 구매/장바구니 버튼 클릭 핸들러
+  const handlePurchaseClick = (buttonType: 'cart' | 'buy') => {
+    amplitudeTrack('purchase_button_click', {
+      button_type: buttonType,
+      timestamp: Date.now(),
+      user_id: null, // TODO: 실제 유저 정보 연동 시 교체
+      product_id: null // TODO: 실제 상품 정보 연동 시 교체
+    });
+    if (buttonType === 'cart') {
+      alert('장바구니에 담았습니다!');
+    } else {
+      alert('구매하기 버튼을 클릭하였습니다!');
+    }
+  };
+
   return (
     <div style={containerStyle}>
       <div style={checkboxRowStyle}>
@@ -111,10 +127,10 @@ const BuyBottomButtons: React.FC<BuyBottomButtonsProps> = ({ today, onTodayChang
           {giftSvg}
           <span style={{ fontSize: 12, color: 'rgb(80, 88, 95)', fontWeight: 400 }}>선물</span>
         </button>
-        <button style={cartButtonStyle}>
+        <button style={cartButtonStyle} onClick={() => handlePurchaseClick('cart')}>
           장바구니
         </button>
-        <button style={buyButtonStyle}>
+        <button style={buyButtonStyle} onClick={() => handlePurchaseClick('buy')}>
           바로구매
         </button>
       </div>

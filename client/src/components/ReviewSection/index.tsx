@@ -199,6 +199,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
   const { ref, inView } = useInView();
+  const [trackedPages, setTrackedPages] = useState<Set<number>>(new Set());
 
   const sortOptions = [
     { label: "최신순", value: "createdAt", active: true, info: false },
@@ -287,13 +288,17 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
 
   // 리뷰 무한 스크롤 트래킹
   useEffect(() => {
-    if (inView && hasMore) {
+    if (inView && hasMore && !trackedPages.has(reviewState.page)) {
       amplitudeTrack('review_scroll_depth', {
         page: reviewState.page,
-        product_id: product._id
+        product_id: product._id,
+        user_id: null, // TODO: 실제 유저 정보 연동 시 교체
+        location: 'review_tab',
+        timestamp: Date.now()
       });
+      setTrackedPages(prev => new Set(prev).add(reviewState.page));
     }
-  }, [inView]);
+  }, [inView, reviewState.page, hasMore, product._id]);
 
   const handleSortChange = (sortType: string) => {
     setCurrentSort(sortType);
