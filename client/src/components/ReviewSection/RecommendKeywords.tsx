@@ -53,7 +53,7 @@ const styles = {
 const RecommendKeywords = ({ keywords, onKeywordChange, currentKeyword, keywordCounts }: RecommendKeywordsProps) => (
   <div style={styles.container} className="recommend-keyword-row">
     {keywords.map((keyword: Keyword) => {
-      const count = keywordCounts?.[keyword.id as keyof typeof keywordCounts] || 0;
+      // const count = keywordCounts?.[keyword.id as keyof typeof keywordCounts] || 0;
       return (
         <button
           key={keyword.id}
@@ -61,9 +61,9 @@ const RecommendKeywords = ({ keywords, onKeywordChange, currentKeyword, keywordC
           onClick={() => onKeywordChange(keyword.id)}
         >
           <span>{keyword.label}</span>
-          {keywordCounts && (
+          {/* {keywordCounts && (
             <span style={styles.count}>({count})</span>
-          )}
+          )} */}
         </button>
       );
     })}

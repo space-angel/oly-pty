@@ -324,6 +324,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     });
     setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
     setHasMore(true);
+    setTrackedPages(new Set());
   };
 
   const handleKeywordChange = (keyword: string) => {
@@ -334,6 +335,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     });
     setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
     setHasMore(true);
+    setTrackedPages(new Set());
   };
 
   const handleFilterApply = (filter: any) => {
@@ -345,6 +347,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     });
     setReviewState(prev => ({ ...prev, page: 1, reviews: [] }));
     setHasMore(true);
+    setTrackedPages(new Set());
   };
 
   const handleFilterReset = () => {
@@ -380,7 +383,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
 
   return (
     <div style={styles.container}>  
-      <div style={styles.title}>전체 리뷰 ({reviewState.total})</div>
+      <div style={styles.title}>전체 리뷰</div>
 
       {/* 상단 정렬/필터 */}
       <div style={styles.header}>
