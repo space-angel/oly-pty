@@ -154,3 +154,8 @@
     "option": "화이트 / M"
   }
 ] 
+
+## 마이그레이션 커맨드
+
+npm run migrate:destroy --prefix server && 
+npm run migrate --prefix server

@@ -34,10 +34,14 @@ const importData = async () => {
 
     const reviewsWithProductId = reviews.map(review => {
       const { productName, reviewImages, ...restOfReview } = review;
+      const productId = productMap[productName];
+      if (!productId) {
+        console.warn(`매핑 실패: productName='${productName}'`);
+      }
       return {
         ...restOfReview,
         images: reviewImages,
-        productId: productMap[productName],
+        productId: productId,
       };
     }).filter(review => review.productId); // productId가 없는 리뷰는 제외
 
@@ -74,4 +78,4 @@ if (process.argv[2] === '-d') {
   destroyData();
 } else {
   importData();
-} 
+}
