@@ -5,6 +5,7 @@ import { Review } from "../../types/reviewSection";
 interface ReviewListProps {
   reviews?: Review[];
   loading?: boolean;
+  isFetchingNextPage?: boolean;
   lastReviewRef?: (node: any) => void;
   currentKeyword?: string;
   filter?: {
@@ -43,6 +44,7 @@ const styles = {
 const ReviewList: React.FC<ReviewListProps> = ({ 
   reviews = [], 
   loading = false,
+  isFetchingNextPage = false,
   lastReviewRef,
   currentKeyword,
   filter
@@ -62,8 +64,8 @@ const ReviewList: React.FC<ReviewListProps> = ({
         const key = (review._id || idx) + '-' + idx;
         return (
           <React.Fragment key={key}>
-            <div ref={isLast && lastReviewRef ? lastReviewRef : undefined}>
-              <ReviewItem {...review} currentKeyword={currentKeyword} filter={filter} />
+            <div ref={isLast && lastReviewRef && !loading && !isFetchingNextPage ? lastReviewRef : undefined}>
+              <ReviewItem {...review} currentKeyword={currentKeyword} filter={filter} reviewId={review._id} productId={review.productId} />
             </div>
             {idx < reviews.length - 1 && (
               <div style={{

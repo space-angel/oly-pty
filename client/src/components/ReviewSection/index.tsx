@@ -194,12 +194,14 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     reviewType: null as string | null,
     rating: null as number | null,
   });
-  const pageSize = 9999;
+  const pageSize = 10;
 
   const [hasMore, setHasMore] = useState(true);
   const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
-  const { ref, inView } = useInView();
+  const { ref: lastReviewRef, inView } = useInView({ threshold: 1 });
+  const prevInView = useRef(false);
   const [trackedPages, setTrackedPages] = useState<Set<number>>(new Set());
+  const isFetchingRef = useRef(false);
 
   const sortOptions = [
     { label: "최신순", value: "createdAt", active: true, info: false },
@@ -216,6 +218,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   ];
 
   const fetchReviews = async ({ reset = false, page = 1, filterArg = filter, sortArg = currentSort, keywordArg = currentKeyword } = {}) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       if (reset) setReviewState(prev => ({ ...prev, loading: true }));
       setIsFetchingNextPage(true);
@@ -247,6 +251,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
     } catch (error) {
       setReviewState(prev => ({ ...prev, loading: false }));
       setIsFetchingNextPage(false);
+    } finally {
+      isFetchingRef.current = false;
     }
   };
 
@@ -266,11 +272,20 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
   }, [product._id, currentSort, currentKeyword, filter]);
 
   useEffect(() => {
-    if (inView && hasMore && !reviewState.loading && !isFetchingNextPage) {
-      fetchReviews({ page: reviewState.page + 1, filterArg: filter, sortArg: currentSort, keywordArg: currentKeyword });
+    const nextPage = reviewState.page + 1;
+    if (
+      inView &&
+      !prevInView.current &&
+      hasMore &&
+      !reviewState.loading &&
+      !isFetchingNextPage &&
+      !trackedPages.has(nextPage) &&
+      !isFetchingRef.current
+    ) {
+      fetchReviews({ page: nextPage, filterArg: filter, sortArg: currentSort, keywordArg: currentKeyword });
     }
-    // eslint-disable-next-line
-  }, [inView, hasMore, reviewState.loading, isFetchingNextPage, reviewState.page, filter, currentSort, currentKeyword]);
+    prevInView.current = inView;
+  }, [inView, reviewState.page, hasMore, isFetchingNextPage, reviewState.loading, trackedPages, filter, currentSort, currentKeyword]);
 
   useEffect(() => {
     fetchKeywordCounts();
@@ -288,6 +303,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
 
   // 리뷰 무한 스크롤 트래킹
   useEffect(() => {
+    console.log('inView', inView, 'page', reviewState.page, 'trackedPages', Array.from(trackedPages));
     if (inView && hasMore && !trackedPages.has(reviewState.page)) {
       amplitudeTrack('review_scroll_depth', {
         page: reviewState.page,
@@ -422,10 +438,12 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ product }) => {
       <ReviewList 
         reviews={filteredReviews}
         loading={reviewState.loading}
+        isFetchingNextPage={isFetchingNextPage}
         currentKeyword={currentKeyword}
         filter={filter}
+        lastReviewRef={lastReviewRef}
       />
-      {isFetchingNextPage ? <div style={{textAlign:'center',padding:'16px'}}>로딩 중...</div> : <div ref={ref} />}
+      {isFetchingNextPage ? <div style={{textAlign:'center',padding:'16px'}}>로딩 중...</div> : null}
       {!hasMore && <div style={{textAlign:'center',padding:'10px',color:'#aaa',fontSize:12}}>더 이상 리뷰가 없습니다.</div>}
 
       {/* 바텀 구매 컴포넌트 영역 확보용 회색 컨테이너 */}
