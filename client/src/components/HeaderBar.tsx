@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { track as amplitudeTrack } from '@amplitude/analytics-browser';
 
 console.log('[HeaderBar] mount');
 
@@ -77,7 +78,15 @@ const HeaderBar: React.FC<{ onVisibleChange?: (visible: boolean) => void }> = ({
         transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)",
       }}
     >
-      <button aria-label="뒤로가기" style={iconButtonStyle}>
+      <button aria-label="뒤로가기" style={iconButtonStyle} onClick={() => {
+        amplitudeTrack('header_exit_click', {
+          button_type: 'back',
+          timestamp: Date.now(),
+          user_id: null // TODO: 실제 유저 정보 연동 시 교체
+        });
+        alert('이 버튼은 리뷰탭 경험 데이터 확보를 위한 프로토타입 테스트용입니다.');
+        // 기존 뒤로가기 동작이 있다면 여기에 추가
+      }}>
         <svg {...iconProps}>
           <path fill="none" stroke="#131518" strokeWidth="1.7" vectorEffect="non-scaling-stroke" d="M14.997 25.982 4.992 15.987l9.995-10.005"/>
           <path stroke="#131518" strokeLinecap="square" strokeWidth="1.7" vectorEffect="non-scaling-stroke" d="m28.018 15.975-22 .011"/>
@@ -90,7 +99,15 @@ const HeaderBar: React.FC<{ onVisibleChange?: (visible: boolean) => void }> = ({
             <path stroke="#131518" strokeWidth="1.7" vectorEffect="non-scaling-stroke" strokeLinecap="round" d="M28.4852 28.4854L20.7071 20.7072"/>
           </svg>
         </button>
-        <button aria-label="홈" style={iconButtonStyle}>
+        <button aria-label="홈" style={iconButtonStyle} onClick={() => {
+          amplitudeTrack('header_exit_click', {
+            button_type: 'home',
+            timestamp: Date.now(),
+            user_id: null // TODO: 실제 유저 정보 연동 시 교체
+          });
+          alert('이 버튼은 리뷰탭 경험 데이터 확보를 위한 프로토타입 테스트용입니다.');
+          // 기존 홈 이동 동작이 있다면 여기에 추가
+        }}>
           <svg {...iconProps}>
             <path fill="none" stroke="#131518" strokeWidth="1.7" vectorEffect="non-scaling-stroke" strokeLinejoin="round" d="M3.70944 28.861L3.70166 13.1703L16.0466 3.12988L28.4016 13.1581L28.4094 28.8487L19.7394 28.853L19.7364 22.9374C19.7355 21.0154 17.9767 19.4648 16.0547 19.4658C14.1328 19.4667 12.3724 21.0191 12.3733 22.941L12.3763 28.8567L3.70944 28.861Z"/>
           </svg>
